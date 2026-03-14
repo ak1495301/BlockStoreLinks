@@ -5,11 +5,14 @@ A lightweight Android browser that can intercept links from other apps, track at
 ## Features
 - Registers as a web browser for `http`/`https` intents.
 - Logs how many times each app tried to open a link.
-- Toggle per-app blocking.
+- Per-app action mode: allow, ask, or deny.
 - Optional per-app redirect to a different browser.
+- Optional global redirect for all apps without a per-app override.
 - Built-in WebView browser for allowed links.
+- Per-app link history with timestamped entries.
 - Filter and sort the app list by attempts or name.
 - Optional per-app allowlist patterns to restrict which URLs can open, including regex with a `re:` prefix.
+- Allowlist entries can optionally redirect a matching link via `pattern => com.example.browser`.
 - Export or import the full policy list as JSON.
 - Import preview shows how many apps are in the pasted JSON.
 - Copy policy JSON to the clipboard.
@@ -17,9 +20,10 @@ A lightweight Android browser that can intercept links from other apps, track at
 
 ## How It Works
 - `LinkInterceptorActivity` receives browser intents and attributes the source app via the referrer when available.
-- Attempts are stored in `SharedPreferences` as JSON.
-- Policies determine whether to block, redirect, or open inside the built-in WebView.
-- If an allowlist exists for an app, only URLs containing those patterns are allowed. Prefix a pattern with `re:` to treat it as a regular expression.
+- Attempts and per-app link history are stored in `SharedPreferences` as JSON.
+- Policies determine whether to allow, ask, deny, redirect, or open inside the built-in WebView.
+- Global redirect applies when a per-app redirect is not set.
+- If an allowlist exists for an app, only URLs containing those patterns are allowed. Prefix a pattern with `re:` to treat it as a regular expression. Use `pattern => package` to redirect a matching link.
 
 ## Setup
 - Open the project in Android Studio.
@@ -31,17 +35,20 @@ A lightweight Android browser that can intercept links from other apps, track at
 1. Install the app.
 2. Set it as the default browser when Android prompts.
 3. Open the app to see the list of attempts.
-4. Toggle `Blocked` for apps you want to prevent from opening links here.
+4. Set each app to `Allow`, `Ask`, or `Deny`.
 5. Use `Redirect to` to forward links to a different browser.
-6. Use `Export policies` to share settings or `Import policies` to replace or merge them from JSON (preview shows app count).
-7. Use `Reset count` per app or `Reset all counts` to clear attempt tracking.
-8. Use `Copy policies` to put the JSON on the clipboard.
+6. Use `Global redirect` to set a default browser when no per-app redirect is set.
+7. Tap an app row to see its link history by timestamp.
+8. Use `Export policies` to share settings or `Import policies` to replace or merge them from JSON (preview shows app count).
+9. Use `Reset count` per app or `Reset all counts` to clear attempt tracking.
+10. Use `Copy policies` to put the JSON on the clipboard.
 
 ## Notes
 - Source app attribution depends on the referrer being provided by the caller.
+- Link history is capped at 200 entries per app to keep storage bounded.
 - Package visibility restrictions are handled via `<queries>` in the manifest.
 - Minimum SDK is set to 19 for broad compatibility.
-- Import merge behavior: attempt counts are added together, and imported block/redirect/allowlist settings override existing ones for that app.
+- Import merge behavior: attempt counts are added together, and imported action/redirect/allowlist settings override existing ones for that app.
 - Regex allowlist safety limits: max 20 regex patterns per app, max 200 characters per regex.
 - The allowlist editor validates `re:` patterns and will refuse invalid or too-long regex entries.
 

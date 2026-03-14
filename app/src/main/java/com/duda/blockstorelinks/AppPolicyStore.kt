@@ -7,7 +7,7 @@ import org.json.JSONObject
 class AppPolicyStore(private val context: Context) {
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-    fun recordAttempt(sourcePackage: String) {
+    fun recordAttempt(sourcePackage: String, url: String, timestamp: Long, outcome: LinkOutcome) {
         val policies = getPolicies().toMutableList()
         val policy = policies.find { it.packageName == sourcePackage }
         if (policy == null) {
@@ -15,7 +15,7 @@ class AppPolicyStore(private val context: Context) {
                 AppPolicy(
                     packageName = sourcePackage,
                     attemptCount = 1,
-                    blocked = false,
+                    linkAction = LinkAction.ALLOW,
                     redirectPackage = null,
                     allowlistPatterns = emptyList()
                 )
@@ -24,6 +24,22 @@ class AppPolicyStore(private val context: Context) {
             policy.attemptCount += 1
         }
         savePolicies(policies)
+        recordAttemptLog(sourcePackage, url, timestamp, outcome)
+    }
+
+    fun updateAttemptOutcome(sourcePackage: String, timestamp: Long, outcome: LinkOutcome) {
+        val logs = readAttemptLogs()
+        val entries = logs[sourcePackage] ?: return
+        val updated = entries.map {
+            if (it.timestamp == timestamp) it.copy(outcome = outcome) else it
+        }
+        logs[sourcePackage] = updated
+        saveAttemptLogs(logs)
+    }
+
+    fun getAttemptHistory(packageName: String): List<LinkAttempt> {
+        return readAttemptLogs()[packageName].orEmpty()
+            .sortedByDescending { it.timestamp }
     }
 
     fun getPolicies(): List<AppPolicy> {
@@ -42,18 +58,18 @@ class AppPolicyStore(private val context: Context) {
         return getPolicies().find { it.packageName == packageName }
     }
 
-    fun setBlocked(packageName: String, blocked: Boolean) {
+    fun setLinkAction(packageName: String, action: LinkAction) {
         val policies = getPolicies().toMutableList()
         val policy = policies.find { it.packageName == packageName }
-            ?: AppPolicy(packageName, 0, blocked, null, emptyList()).also { policies.add(it) }
-        policy.blocked = blocked
+            ?: AppPolicy(packageName, 0, action, null, emptyList()).also { policies.add(it) }
+        policy.linkAction = action
         savePolicies(policies)
     }
 
     fun setRedirect(packageName: String, redirectPackage: String?) {
         val policies = getPolicies().toMutableList()
         val policy = policies.find { it.packageName == packageName }
-            ?: AppPolicy(packageName, 0, false, redirectPackage, emptyList()).also { policies.add(it) }
+            ?: AppPolicy(packageName, 0, LinkAction.ALLOW, redirectPackage, emptyList()).also { policies.add(it) }
         policy.redirectPackage = redirectPackage
         savePolicies(policies)
     }
@@ -61,7 +77,7 @@ class AppPolicyStore(private val context: Context) {
     fun setAllowlist(packageName: String, allowlistPatterns: List<String>) {
         val policies = getPolicies().toMutableList()
         val policy = policies.find { it.packageName == packageName }
-            ?: AppPolicy(packageName, 0, false, null, allowlistPatterns).also { policies.add(it) }
+            ?: AppPolicy(packageName, 0, LinkAction.ALLOW, null, allowlistPatterns).also { policies.add(it) }
         policy.allowlistPatterns = allowlistPatterns
         savePolicies(policies)
     }
@@ -123,13 +139,21 @@ class AppPolicyStore(private val context: Context) {
                 existing[policy.packageName] = policy
             } else {
                 current.attemptCount += policy.attemptCount
-                current.blocked = policy.blocked
+                current.linkAction = policy.linkAction
                 current.redirectPackage = policy.redirectPackage
                 current.allowlistPatterns = policy.allowlistPatterns
             }
         }
         savePolicies(existing.values.toList())
         return true
+    }
+
+    fun setGlobalRedirect(packageName: String?) {
+        prefs.edit().putString(KEY_GLOBAL_REDIRECT, packageName.orEmpty()).apply()
+    }
+
+    fun getGlobalRedirect(): String? {
+        return prefs.getString(KEY_GLOBAL_REDIRECT, "").takeIf { it?.isNotBlank() == true }
     }
 
     private fun savePolicies(policies: List<AppPolicy>) {
@@ -143,10 +167,18 @@ class AppPolicyStore(private val context: Context) {
     private fun readPolicy(obj: JSONObject): AppPolicy? {
         val packageName = obj.optString("packageName", "").trim()
         if (packageName.isEmpty()) return null
+        val storedAction = obj.optString("linkAction", "").trim()
+        val action = if (storedAction.isNotEmpty()) {
+            LinkAction.fromStored(storedAction)
+        } else if (obj.optBoolean("blocked", false)) {
+            LinkAction.DENY
+        } else {
+            LinkAction.ALLOW
+        }
         return AppPolicy(
             packageName = packageName,
             attemptCount = obj.optInt("attemptCount", 0),
-            blocked = obj.optBoolean("blocked", false),
+            linkAction = action,
             redirectPackage = obj.optString("redirectPackage", "").takeIf { it.isNotBlank() },
             allowlistPatterns = readAllowlist(obj)
         )
@@ -156,7 +188,8 @@ class AppPolicyStore(private val context: Context) {
         val obj = JSONObject()
         obj.put("packageName", policy.packageName)
         obj.put("attemptCount", policy.attemptCount)
-        obj.put("blocked", policy.blocked)
+        obj.put("blocked", policy.linkAction == LinkAction.DENY)
+        obj.put("linkAction", policy.linkAction.name)
         obj.put("redirectPackage", policy.redirectPackage ?: "")
         obj.put("allowlist", JSONArray(policy.allowlistPatterns))
         return obj
@@ -174,8 +207,68 @@ class AppPolicyStore(private val context: Context) {
         return result
     }
 
+    private fun recordAttemptLog(
+        sourcePackage: String,
+        url: String,
+        timestamp: Long,
+        outcome: LinkOutcome
+    ) {
+        val logs = readAttemptLogs()
+        val entries = logs[sourcePackage]?.toMutableList() ?: mutableListOf()
+        entries.add(LinkAttempt(url = url, timestamp = timestamp, outcome = outcome))
+        val trimmed = if (entries.size > MAX_HISTORY_PER_APP) {
+            entries.takeLast(MAX_HISTORY_PER_APP)
+        } else {
+            entries
+        }
+        logs[sourcePackage] = trimmed
+        saveAttemptLogs(logs)
+    }
+
+    private fun readAttemptLogs(): MutableMap<String, List<LinkAttempt>> {
+        val raw = prefs.getString(KEY_ATTEMPT_LOGS, null) ?: return mutableMapOf()
+        val root = JSONObject(raw)
+        val result = mutableMapOf<String, List<LinkAttempt>>()
+        val keys = root.keys()
+        while (keys.hasNext()) {
+            val packageName = keys.next()
+            val array = root.optJSONArray(packageName) ?: continue
+            val entries = mutableListOf<LinkAttempt>()
+            for (i in 0 until array.length()) {
+                val obj = array.optJSONObject(i) ?: continue
+                val url = obj.optString("url", "")
+                val timestamp = obj.optLong("timestamp", 0L)
+                val outcome = LinkOutcome.fromStored(obj.optString("outcome", ""))
+                if (url.isNotBlank() && timestamp > 0L) {
+                    entries.add(LinkAttempt(url = url, timestamp = timestamp, outcome = outcome))
+                }
+            }
+            result[packageName] = entries
+        }
+        return result
+    }
+
+    private fun saveAttemptLogs(logs: Map<String, List<LinkAttempt>>) {
+        val root = JSONObject()
+        logs.forEach { (packageName, entries) ->
+            val array = JSONArray()
+            entries.forEach { entry ->
+                val obj = JSONObject()
+                obj.put("url", entry.url)
+                obj.put("timestamp", entry.timestamp)
+                obj.put("outcome", entry.outcome.name)
+                array.put(obj)
+            }
+            root.put(packageName, array)
+        }
+        prefs.edit().putString(KEY_ATTEMPT_LOGS, root.toString()).apply()
+    }
+
     companion object {
         private const val PREFS_NAME = "block_store_links"
         private const val KEY_POLICIES = "policies"
+        private const val KEY_ATTEMPT_LOGS = "attempt_logs"
+        private const val KEY_GLOBAL_REDIRECT = "global_redirect"
+        private const val MAX_HISTORY_PER_APP = 200
     }
 }

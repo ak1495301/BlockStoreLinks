@@ -1,14 +1,5 @@
-- Implemented core intent interception, per-app attempt tracking, block toggles, and redirect rules.
-- Added a basic in-app WebView browser for allowed links and a blocked notice screen.
-- Added app list UI for managing per-app policies plus filter/sort controls.
-- Added Gradle wrapper files for reproducible builds.
-- Added per-app allowlist patterns to restrict which URLs can open.
-- Added export/import for policy list via JSON sharing.
-- Added a merge option for imports to combine lists.
-- Added reset controls for per-app and global attempt counts.
-- Added regex allowlist support with safety limits.
-- Added allowlist regex validation feedback in the editor.
-- Added a copy-to-clipboard button for policy export.
-- Added instrumentation tests for policy persistence.
-- Added instrumentation tests for link interception flows.
-- Added an import preview that counts apps in pasted JSON.
+- Added per-app action mode (allow, ask, deny) in the main list.
+- Added global redirect selection with manual package entry support.
+- Added per-app link history storage with timestamped entries and a history dialog.
+- Added allowlist support for per-link redirects via `pattern => package`.
+- Improved browser pickers and fallback referrer handling.

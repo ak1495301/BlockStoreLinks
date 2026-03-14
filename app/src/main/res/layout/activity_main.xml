@@ -94,6 +94,22 @@
             android:text="@string/copy_policies" />
 
         <com.google.android.material.button.MaterialButton
+            android:id="@+id/globalRedirect"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/global_redirect" />
+
+        <TextView
+            android:id="@+id/globalRedirectTarget"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="12sp"
+            android:text="@string/global_redirect_none" />
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/resetAllCounts"
             style="?attr/materialButtonOutlinedStyle"
             android:layout_width="match_parent"

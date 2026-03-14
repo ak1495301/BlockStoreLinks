@@ -42,7 +42,7 @@ class LinkInterceptorActivityTest {
 
     @Test
     fun blockedPolicy_opensBlockedActivity() {
-        store.setBlocked("com.example.app", true)
+        store.setLinkAction("com.example.app", LinkAction.DENY)
 
         val intent = interceptorIntent("com.example.app")
 

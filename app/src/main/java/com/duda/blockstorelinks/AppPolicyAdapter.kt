@@ -9,14 +9,17 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.switchmaterial.SwitchMaterial
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.button.MaterialButtonToggleGroup
 
 class AppPolicyAdapter(
     private val context: Context,
-    private val onToggleBlocked: (AppPolicy, Boolean) -> Unit,
+    private val onSelectAction: (AppPolicy, LinkAction) -> Unit,
     private val onPickRedirect: (AppPolicy) -> Unit,
     private val onEditAllowlist: (AppPolicy) -> Unit,
-    private val onResetAttempts: (AppPolicy) -> Unit
+    private val onResetAttempts: (AppPolicy) -> Unit,
+    private val onShowHistory: (AppPolicy) -> Unit,
+    private val resolveRedirectLabel: (AppPolicy) -> String
 ) : RecyclerView.Adapter<AppPolicyAdapter.PolicyViewHolder>() {
 
     private val items = mutableListOf<AppPolicy>()
@@ -44,7 +47,10 @@ class AppPolicyAdapter(
         private val appName: TextView = itemView.findViewById(R.id.appName)
         private val appPackage: TextView = itemView.findViewById(R.id.appPackage)
         private val attempts: TextView = itemView.findViewById(R.id.attempts)
-        private val blockedSwitch: SwitchMaterial = itemView.findViewById(R.id.blockedSwitch)
+        private val actionToggle: MaterialButtonToggleGroup = itemView.findViewById(R.id.actionToggle)
+        private val actionAllow: MaterialButton = itemView.findViewById(R.id.actionAllow)
+        private val actionAsk: MaterialButton = itemView.findViewById(R.id.actionAsk)
+        private val actionDeny: MaterialButton = itemView.findViewById(R.id.actionDeny)
         private val redirectButton: Button = itemView.findViewById(R.id.redirectButton)
         private val redirectTarget: TextView = itemView.findViewById(R.id.redirectTarget)
         private val allowlistButton: Button = itemView.findViewById(R.id.allowlistButton)
@@ -56,15 +62,15 @@ class AppPolicyAdapter(
             appPackage.text = policy.packageName
             attempts.text = context.getString(R.string.attempts_count, policy.attemptCount)
 
-            blockedSwitch.setOnCheckedChangeListener(null)
-            blockedSwitch.isChecked = policy.blocked
-            blockedSwitch.setOnCheckedChangeListener { _, isChecked ->
-                onToggleBlocked(policy, isChecked)
+            actionToggle.removeOnButtonCheckedListener(actionListener)
+            when (policy.linkAction) {
+                LinkAction.ALLOW -> actionToggle.check(actionAllow.id)
+                LinkAction.ASK -> actionToggle.check(actionAsk.id)
+                LinkAction.DENY -> actionToggle.check(actionDeny.id)
             }
+            actionToggle.addOnButtonCheckedListener(actionListener)
 
-            val redirectLabel = policy.redirectPackage?.let { resolveAppLabel(it) }
-                ?: context.getString(R.string.clear_redirect)
-            redirectTarget.text = redirectLabel
+            redirectTarget.text = resolveRedirectLabel(policy)
 
             redirectButton.setOnClickListener {
                 onPickRedirect(policy)
@@ -80,7 +86,25 @@ class AppPolicyAdapter(
             resetAttempts.setOnClickListener {
                 onResetAttempts(policy)
             }
+            itemView.setOnClickListener {
+                onShowHistory(policy)
+            }
         }
+
+        private val actionListener =
+            MaterialButtonToggleGroup.OnButtonCheckedListener { _, checkedId, isChecked ->
+                if (!isChecked) return@OnButtonCheckedListener
+                val action = when (checkedId) {
+                    actionAllow.id -> LinkAction.ALLOW
+                    actionAsk.id -> LinkAction.ASK
+                    actionDeny.id -> LinkAction.DENY
+                    else -> LinkAction.ALLOW
+                }
+                val position = bindingAdapterPosition
+                if (position == RecyclerView.NO_POSITION) return@OnButtonCheckedListener
+                val policy = items[position]
+                onSelectAction(policy, action)
+            }
 
         private fun resolveAppLabel(packageName: String): String {
             return try {

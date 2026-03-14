@@ -1,20 +1,22 @@
 # Architecture
 
 ## Activities
-- `LinkInterceptorActivity`: entry point for `http`/`https` intents. Records attempts, enforces block/redirect rules, and routes to the correct destination.
-- `MainActivity`: policy management UI with per-app block toggles and redirect selection.
+- `LinkInterceptorActivity`: entry point for `http`/`https` intents. Records attempts, enforces allow/ask/deny, applies allowlist logic, and routes to a redirect target or the in-app browser.
+- `MainActivity`: policy management UI with per-app action mode, redirects, allowlist editing, and history browsing.
 - `BrowserActivity`: simple in-app WebView.
 - `BlockedActivity`: blocking notice with a manual option to open the link in another browser.
 
 ## Data Model
-- `AppPolicy`: per-app rule and attempt counter.
-- `AppPolicyStore`: stores policies in `SharedPreferences` as JSON and exposes CRUD operations.
+- `AppPolicy`: per-app rules (action, redirect, allowlist) and attempt counter.
+- `LinkAttempt`: timestamped link history entry with outcome.
+- `AppPolicyStore`: stores policies, global redirect, and per-app link history in `SharedPreferences` as JSON.
 
 ## Intent Routing
-1. Interceptor receives a link.
-2. Source app is derived from referrer fields when available.
-3. Policy lookup determines:
-   - Allowlist check: if configured, only matching URLs proceed.
-   - Redirect to a chosen browser (if set).
-   - Block and show a notice.
-   - Open in the in-app WebView.
+1. Interceptor receives a link and derives the source app from referrer fields when available.
+2. Allowlist check runs first; if it fails, the link is blocked.
+3. Action mode applies next:
+   - `Deny`: show the blocked screen.
+   - `Ask`: prompt the user to allow or deny.
+   - `Allow`: continue.
+4. Redirect resolution prefers allowlist overrides, then per-app redirect, then global redirect.
+5. The link is forwarded to the chosen browser or opened in the in-app WebView.

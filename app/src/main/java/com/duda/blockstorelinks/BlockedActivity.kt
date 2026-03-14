@@ -19,7 +19,10 @@ class BlockedActivity : AppCompatActivity() {
         val openButton = findViewById<Button>(R.id.openInBrowser)
         openButton.setOnClickListener {
             if (url != null) {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                    addCategory(Intent.CATEGORY_BROWSABLE)
+                    addCategory(Intent.CATEGORY_DEFAULT)
+                }
                 startActivity(Intent.createChooser(intent, getString(R.string.pick_browser)))
             }
             finish()
