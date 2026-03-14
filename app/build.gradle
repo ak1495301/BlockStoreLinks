@@ -52,3 +52,25 @@ dependencies {
     androidTestImplementation "androidx.test.espresso:espresso-intents:3.5.1"
     androidTestImplementation "androidx.test:core-ktx:1.5.0"
 }
+
+tasks.register("printApkPaths") {
+    group = "build"
+    description = "Prints the paths of generated APKs."
+
+    doLast {
+        def baseDir = layout.buildDirectory.dir("outputs/apk").get().asFile
+        def apks = fileTree(baseDir).matching { include "**/*.apk" }.files
+        if (apks.isEmpty()) {
+            println("No APKs found under ${baseDir}. Run assembleDebug/assembleRelease first.")
+        } else {
+            println("Generated APKs:")
+            apks.sort { a, b -> a.path <=> b.path }.each { apk ->
+                println(" - ${apk}")
+            }
+        }
+    }
+}
+
+tasks.named("build").configure {
+    finalizedBy("printApkPaths")
+}
