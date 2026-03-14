@@ -4,15 +4,15 @@ plugins {
 }
 
 android {
-    namespace "com.duda.blockstorelinks"
-    compileSdk 34
+    namespace = "com.duda.blockstorelinks"
+    compileSdk = 34
 
     defaultConfig {
-        applicationId "com.duda.blockstorelinks"
-        minSdk 19
-        targetSdk 34
-        versionCode 1
-        versionName "0.1.0"
+        applicationId = "com.duda.blockstorelinks"
+        minSdk = 19
+        targetSdk = 34
+        versionCode = 1
+        versionName = "0.1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 

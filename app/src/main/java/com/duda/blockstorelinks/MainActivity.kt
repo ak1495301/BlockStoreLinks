@@ -100,7 +100,7 @@ class MainActivity : AppCompatActivity() {
         }
         copyPolicies.setOnClickListener {
             val json = store.exportPoliciesJson()
-            val clipboard = getSystemService(ClipboardManager::class.java)
+            val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
             val clip = ClipData.newPlainText(getString(R.string.export_policies), json)
             clipboard.setPrimaryClip(clip)
             Toast.makeText(this, getString(R.string.copy_done), Toast.LENGTH_SHORT).show()

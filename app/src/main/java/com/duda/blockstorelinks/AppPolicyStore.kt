@@ -147,7 +147,7 @@ class AppPolicyStore(private val context: Context) {
             packageName = packageName,
             attemptCount = obj.optInt("attemptCount", 0),
             blocked = obj.optBoolean("blocked", false),
-            redirectPackage = obj.optString("redirectPackage", null).takeIf { it.isNotBlank() },
+            redirectPackage = obj.optString("redirectPackage", "").takeIf { it.isNotBlank() },
             allowlistPatterns = readAllowlist(obj)
         )
     }

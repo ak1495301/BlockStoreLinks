@@ -76,7 +76,7 @@ class LinkInterceptorActivity : AppCompatActivity() {
     }
 
     private fun resolveSourcePackage(intent: Intent): String? {
-        val referrer = intent.getParcelableExtra<Uri>(Intent.EXTRA_REFERRER)
+        val referrer = getParcelableUri(intent, Intent.EXTRA_REFERRER)
         if (referrer != null && referrer.scheme == "android-app") {
             return referrer.host
         }
@@ -85,6 +85,15 @@ class LinkInterceptorActivity : AppCompatActivity() {
             return Uri.parse(referrerName).host
         }
         return intent.`package`
+    }
+
+    private fun getParcelableUri(intent: Intent, key: String): Uri? {
+        return if (android.os.Build.VERSION.SDK_INT >= 33) {
+            intent.getParcelableExtra(key, Uri::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            intent.getParcelableExtra(key)
+        }
     }
 
     private fun matchesAllowlist(url: String, allowlist: List<String>): Boolean {
