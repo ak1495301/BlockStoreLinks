@@ -509,7 +509,9 @@ class MainActivity : AppCompatActivity() {
         patterns.forEachIndexed { index, raw ->
             val entry = parseRedirectRuleEntry(raw)
                 ?: return getString(R.string.redirect_rules_error_format, index + 1)
-            if (!isValidPackage(entry.redirectPackage)) {
+            val target = entry.redirectPackage
+                ?: return getString(R.string.redirect_rules_error_format, index + 1)
+            if (!isValidPackage(target)) {
                 return getString(R.string.redirect_rules_error_package, index + 1)
             }
             val value = entry.pattern
