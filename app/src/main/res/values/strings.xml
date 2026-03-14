@@ -22,4 +22,7 @@
     <string name="import_hint">Paste exported JSON here</string>
     <string name="import_failed">Import failed: invalid JSON</string>
     <string name="import_success">Import complete</string>
+    <string name="import_merge">Merge</string>
+    <string name="import_replace">Replace</string>
+    <string name="import_success_merge">Import complete (merged)</string>
 </resources>

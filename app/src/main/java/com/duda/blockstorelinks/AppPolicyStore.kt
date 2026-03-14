@@ -87,6 +87,26 @@ class AppPolicyStore(private val context: Context) {
         return true
     }
 
+    fun mergePoliciesFromJson(raw: String): Boolean {
+        val array = JSONArray(raw)
+        val existing = getPolicies().associateBy { it.packageName }.toMutableMap()
+        for (i in 0 until array.length()) {
+            val obj = array.optJSONObject(i) ?: continue
+            val policy = readPolicy(obj) ?: continue
+            val current = existing[policy.packageName]
+            if (current == null) {
+                existing[policy.packageName] = policy
+            } else {
+                current.attemptCount += policy.attemptCount
+                current.blocked = policy.blocked
+                current.redirectPackage = policy.redirectPackage
+                current.allowlistPatterns = policy.allowlistPatterns
+            }
+        }
+        savePolicies(existing.values.toList())
+        return true
+    }
+
     private fun savePolicies(policies: List<AppPolicy>) {
         val array = JSONArray()
         policies.forEach { policy ->

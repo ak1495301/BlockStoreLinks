@@ -4,3 +4,4 @@
 - Added Gradle wrapper files for reproducible builds.
 - Added per-app allowlist patterns to restrict which URLs can open.
 - Added export/import for policy list via JSON sharing.
+- Added a merge option for imports to combine lists.

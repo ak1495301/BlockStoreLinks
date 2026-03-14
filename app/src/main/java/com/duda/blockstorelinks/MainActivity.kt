@@ -159,19 +159,31 @@ class MainActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle(getString(R.string.import_policies))
             .setView(input)
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                val raw = input.text.toString().trim()
-                val payload = if (raw.isEmpty()) "[]" else raw
-                try {
-                    store.replacePoliciesFromJson(payload)
-                    refreshList()
-                    Toast.makeText(this, getString(R.string.import_success), Toast.LENGTH_SHORT).show()
-                } catch (ex: Exception) {
-                    Toast.makeText(this, getString(R.string.import_failed), Toast.LENGTH_SHORT).show()
-                }
+            .setPositiveButton(getString(R.string.import_replace)) { _, _ ->
+                handleImport(input.text.toString(), merge = false)
+            }
+            .setNeutralButton(getString(R.string.import_merge)) { _, _ ->
+                handleImport(input.text.toString(), merge = true)
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
+    }
+
+    private fun handleImport(rawInput: String, merge: Boolean) {
+        val raw = rawInput.trim()
+        val payload = if (raw.isEmpty()) "[]" else raw
+        try {
+            if (merge) {
+                store.mergePoliciesFromJson(payload)
+                Toast.makeText(this, getString(R.string.import_success_merge), Toast.LENGTH_SHORT).show()
+            } else {
+                store.replacePoliciesFromJson(payload)
+                Toast.makeText(this, getString(R.string.import_success), Toast.LENGTH_SHORT).show()
+            }
+            refreshList()
+        } catch (ex: Exception) {
+            Toast.makeText(this, getString(R.string.import_failed), Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun getBrowserTargets(): List<ResolveInfo> {

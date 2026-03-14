@@ -30,12 +30,13 @@ A lightweight Android browser that can intercept links from other apps, track at
 3. Open the app to see the list of attempts.
 4. Toggle `Blocked` for apps you want to prevent from opening links here.
 5. Use `Redirect to` to forward links to a different browser.
-6. Use `Export policies` to share settings or `Import policies` to replace them from JSON.
+6. Use `Export policies` to share settings or `Import policies` to replace or merge them from JSON.
 
 ## Notes
 - Source app attribution depends on the referrer being provided by the caller.
 - Package visibility restrictions are handled via `<queries>` in the manifest.
 - Minimum SDK is set to 19 for broad compatibility.
+- Import merge behavior: attempt counts are added together, and imported block/redirect/allowlist settings override existing ones for that app.
 
 ## Project Structure
 - `app/src/main/java/com/duda/blockstorelinks/LinkInterceptorActivity.kt`
