@@ -5,6 +5,8 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import java.util.regex.Pattern
+import java.util.regex.PatternSyntaxException
 
 class LinkInterceptorActivity : AppCompatActivity() {
     private lateinit var store: AppPolicyStore
@@ -87,6 +89,29 @@ class LinkInterceptorActivity : AppCompatActivity() {
 
     private fun matchesAllowlist(url: String, allowlist: List<String>): Boolean {
         val normalized = url.lowercase()
-        return allowlist.any { normalized.contains(it.lowercase()) }
+        var regexCount = 0
+        return allowlist.any { raw ->
+            val value = raw.trim()
+            if (value.startsWith(REGEX_PREFIX)) {
+                if (regexCount >= MAX_REGEX_PATTERNS) return@any false
+                regexCount += 1
+                val patternBody = value.removePrefix(REGEX_PREFIX)
+                if (patternBody.length > MAX_REGEX_LENGTH) return@any false
+                try {
+                    val pattern = Pattern.compile(patternBody, Pattern.CASE_INSENSITIVE)
+                    pattern.matcher(url).find()
+                } catch (ex: PatternSyntaxException) {
+                    false
+                }
+            } else {
+                normalized.contains(value.lowercase())
+            }
+        }
+    }
+
+    companion object {
+        private const val REGEX_PREFIX = "re:"
+        private const val MAX_REGEX_LENGTH = 200
+        private const val MAX_REGEX_PATTERNS = 20
     }
 }

@@ -9,7 +9,7 @@ A lightweight Android browser that can intercept links from other apps, track at
 - Optional per-app redirect to a different browser.
 - Built-in WebView browser for allowed links.
 - Filter and sort the app list by attempts or name.
-- Optional per-app allowlist patterns to restrict which URLs can open.
+- Optional per-app allowlist patterns to restrict which URLs can open, including regex with a `re:` prefix.
 - Export or import the full policy list as JSON.
 - Reset attempt counts per app or for all apps.
 
@@ -17,7 +17,7 @@ A lightweight Android browser that can intercept links from other apps, track at
 - `LinkInterceptorActivity` receives browser intents and attributes the source app via the referrer when available.
 - Attempts are stored in `SharedPreferences` as JSON.
 - Policies determine whether to block, redirect, or open inside the built-in WebView.
-- If an allowlist exists for an app, only URLs containing those patterns are allowed.
+- If an allowlist exists for an app, only URLs containing those patterns are allowed. Prefix a pattern with `re:` to treat it as a regular expression.
 
 ## Setup
 - Open the project in Android Studio.
@@ -39,6 +39,7 @@ A lightweight Android browser that can intercept links from other apps, track at
 - Package visibility restrictions are handled via `<queries>` in the manifest.
 - Minimum SDK is set to 19 for broad compatibility.
 - Import merge behavior: attempt counts are added together, and imported block/redirect/allowlist settings override existing ones for that app.
+- Regex allowlist safety limits: max 20 regex patterns per app, max 200 characters per regex.
 
 ## Project Structure
 - `app/src/main/java/com/duda/blockstorelinks/LinkInterceptorActivity.kt`
