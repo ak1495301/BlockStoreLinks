@@ -423,16 +423,19 @@ class MainActivity : AppCompatActivity() {
 
     private fun showHistoryDialog(policy: AppPolicy) {
         val history = store.getAttemptHistory(policy.packageName)
-        if (history.isEmpty()) {
-            Toast.makeText(this, getString(R.string.history_empty), Toast.LENGTH_SHORT).show()
-            return
-        }
-        val items = history.map { formatAttemptCompact(it) }
-        AlertDialog.Builder(this)
+        val builder = AlertDialog.Builder(this)
             .setTitle(getString(R.string.history_title, getAppLabel(policy.packageName)))
-            .setItems(items.toTypedArray(), null)
             .setPositiveButton(android.R.string.ok, null)
-            .show()
+            .setNeutralButton(getString(R.string.set_label)) { _, _ ->
+                showLabelDialog(policy)
+            }
+        if (history.isEmpty()) {
+            builder.setMessage(getString(R.string.history_empty))
+        } else {
+            val items = history.map { formatAttemptCompact(it) }
+            builder.setItems(items.toTypedArray(), null)
+        }
+        builder.show()
     }
 
     private fun formatAttemptCompact(attempt: LinkAttempt): String {
@@ -450,7 +453,13 @@ class MainActivity : AppCompatActivity() {
         } else {
             url
         }
-        return getString(R.string.history_entry_compact, date, outcome, compactUrl)
+        val hint = attempt.sourceHint?.trim()
+        return if (hint.isNullOrEmpty()) {
+            getString(R.string.history_entry_compact, date, outcome, compactUrl)
+        } else {
+            val hintLine = getString(R.string.history_hint, hint)
+            getString(R.string.history_entry_compact_hint, date, outcome, compactUrl, hintLine)
+        }
     }
 
     private fun getBrowserTargets(): List<ResolveInfo> {
@@ -476,6 +485,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun resolveAppLabel(packageName: String): String {
+        store.getLabelOverride(packageName)?.let { return it }
         if (packageName == UNKNOWN_PACKAGE) {
             return getString(R.string.unknown_app_no_referrer)
         }
@@ -485,6 +495,31 @@ class MainActivity : AppCompatActivity() {
         } catch (ex: Exception) {
             getString(R.string.unknown_app)
         }
+    }
+
+    private fun showLabelDialog(policy: AppPolicy) {
+        val input = EditText(this).apply {
+            hint = getString(R.string.set_label_hint)
+            setText(store.getLabelOverride(policy.packageName).orEmpty())
+            inputType = InputType.TYPE_CLASS_TEXT
+        }
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.set_label_title))
+            .setView(input)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                val value = input.text.toString().trim().ifEmpty { null }
+                store.setLabelOverride(policy.packageName, value)
+                labelCache.remove(policy.packageName)
+                refreshList()
+                val message = if (value == null) {
+                    getString(R.string.label_cleared)
+                } else {
+                    getString(R.string.label_saved)
+                }
+                Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     private enum class SortMode {

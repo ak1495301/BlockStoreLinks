@@ -22,6 +22,11 @@
     <string name="unknown_app_no_referrer">Unknown app (no referrer)</string>
     <string name="pick_browser">Pick a browser</string>
     <string name="no_external_browser">No external browser found.</string>
+    <string name="set_label">Set label</string>
+    <string name="set_label_title">Set label</string>
+    <string name="set_label_hint">Custom label (leave blank to clear)</string>
+    <string name="label_saved">Label saved</string>
+    <string name="label_cleared">Label cleared</string>
     <string name="clear_redirect">Clear redirect</string>
     <string name="filter_apps">Filter apps</string>
     <string name="sort_attempts">Sort: Attempts</string>
@@ -59,6 +64,8 @@
     <string name="history_title">Link history for %1$s</string>
     <string name="history_empty">No links recorded for this app yet.</string>
     <string name="history_entry_compact">%1$s • %2$s — %3$s</string>
+    <string name="history_entry_compact_hint">%1$s • %2$s — %3$s\n%4$s</string>
+    <string name="history_hint">Hint: %1$s</string>
     <string name="outcome_allowed">Allowed</string>
     <string name="outcome_denied">Denied</string>
     <string name="outcome_redirected">Redirected</string>

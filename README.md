@@ -9,11 +9,12 @@ A lightweight Android browser that can intercept links from other apps, track at
 - Optional per-app redirect to a different browser.
 - Optional global redirect for all apps without a per-app override.
 - Built-in WebView browser for allowed links.
-- Per-app link history with timestamped entries.
+- Per-app link history with timestamped entries and optional source hints.
 - Filter and sort the app list by attempts or name.
 - Optional per-app allowlist patterns to restrict which URLs can open, including regex with a `re:` prefix.
 - Allowlist entries can optionally redirect a matching link via `pattern => com.example.browser`.
-- Export or import the full policy list as JSON, including global redirect and link history.
+- Manual label overrides for app entries (including unknown sources).
+- Export or import the full policy list as JSON, including global redirect, link history, and label overrides.
 - Import preview shows how many apps are in the pasted JSON.
 - Copy policy JSON to the clipboard.
 - Reset attempt counts per app or for all apps.
@@ -21,6 +22,7 @@ A lightweight Android browser that can intercept links from other apps, track at
 ## How It Works
 - `LinkInterceptorActivity` receives browser intents and attributes the source app via the referrer when available (with best-effort parsing when only a referrer string is provided).
 - Attempts and per-app link history are stored in `SharedPreferences` as JSON.
+- When the source app is unknown, the app stores a short hint from the intent (referrer fields, package, and extra keys).
 - Policies determine whether to allow, ask, deny, redirect, or open inside the built-in WebView.
 - Global redirect applies when a per-app redirect is not set.
 - If an allowlist exists for an app, only URLs containing those patterns are allowed. Prefix a pattern with `re:` to treat it as a regular expression. Use `pattern => package` to redirect a matching link.
@@ -39,7 +41,7 @@ A lightweight Android browser that can intercept links from other apps, track at
 5. When asked, choose allow/deny once or set an always allow/deny rule.
 6. Use `Redirect to` to forward links to a different browser.
 7. Use `Global redirect` to set a default browser when no per-app redirect is set.
-8. Tap an app row to see its link history by timestamp.
+8. Tap an app row to see its link history by timestamp and optionally set a custom label.
 9. Use `Export policies` to share settings or `Import policies` to replace or merge them from JSON (preview shows app count).
 10. Use `Reset count` per app or `Reset all counts` to clear attempt tracking.
 11. Use `Copy policies` to put the JSON on the clipboard.
@@ -53,6 +55,7 @@ A lightweight Android browser that can intercept links from other apps, track at
 - Regex allowlist safety limits: max 20 regex patterns per app, max 200 characters per regex.
 - The allowlist editor validates `re:` patterns and will refuse invalid or too-long regex entries.
 - The external browser chooser filters out Block Store Links itself; if no other browsers are installed, it falls back to the built-in WebView.
+- Label overrides are included in export/import.
 
 ## Project Structure
 - `app/src/main/java/com/duda/blockstorelinks/LinkInterceptorActivity.kt`

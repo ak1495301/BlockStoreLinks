@@ -7,7 +7,13 @@ import org.json.JSONObject
 class AppPolicyStore(private val context: Context) {
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-    fun recordAttempt(sourcePackage: String, url: String, timestamp: Long, outcome: LinkOutcome) {
+    fun recordAttempt(
+        sourcePackage: String,
+        url: String,
+        timestamp: Long,
+        outcome: LinkOutcome,
+        sourceHint: String? = null
+    ) {
         val policies = getPolicies().toMutableList()
         val policy = policies.find { it.packageName == sourcePackage }
         if (policy == null) {
@@ -24,7 +30,7 @@ class AppPolicyStore(private val context: Context) {
             policy.attemptCount += 1
         }
         savePolicies(policies)
-        recordAttemptLog(sourcePackage, url, timestamp, outcome)
+        recordAttemptLog(sourcePackage, url, timestamp, outcome, sourceHint)
     }
 
     fun updateAttemptOutcome(sourcePackage: String, timestamp: Long, outcome: LinkOutcome) {
@@ -98,7 +104,7 @@ class AppPolicyStore(private val context: Context) {
     fun exportPoliciesJson(): String {
         val policies = getPolicies()
         val payload = JSONObject()
-        payload.put("version", 2)
+        payload.put("version", 3)
         payload.put("globalRedirect", getGlobalRedirect() ?: "")
         val array = JSONArray()
         policies.forEach { policy ->
@@ -106,6 +112,7 @@ class AppPolicyStore(private val context: Context) {
         }
         payload.put("policies", array)
         payload.put("attemptLogs", writeAttemptLogs(readAttemptLogs()))
+        payload.put("labelOverrides", writeLabelOverrides(getAllLabelOverrides()))
         return payload.toString()
     }
 
@@ -121,6 +128,9 @@ class AppPolicyStore(private val context: Context) {
         }
         if (payload.hasLogs) {
             saveAttemptLogs(payload.attemptLogs)
+        }
+        if (payload.hasLabelOverrides) {
+            saveLabelOverrides(payload.labelOverrides)
         }
         return true
     }
@@ -147,6 +157,11 @@ class AppPolicyStore(private val context: Context) {
             val mergedLogs = mergeAttemptLogs(readAttemptLogs(), payload.attemptLogs)
             saveAttemptLogs(mergedLogs)
         }
+        if (payload.hasLabelOverrides) {
+            val mergedOverrides = getAllLabelOverrides().toMutableMap()
+            mergedOverrides.putAll(payload.labelOverrides)
+            saveLabelOverrides(mergedOverrides)
+        }
         return true
     }
 
@@ -156,6 +171,20 @@ class AppPolicyStore(private val context: Context) {
 
     fun getGlobalRedirect(): String? {
         return prefs.getString(KEY_GLOBAL_REDIRECT, "").takeIf { it?.isNotBlank() == true }
+    }
+
+    fun getLabelOverride(packageName: String): String? {
+        return getAllLabelOverrides()[packageName]
+    }
+
+    fun setLabelOverride(packageName: String, label: String?) {
+        val updated = getAllLabelOverrides().toMutableMap()
+        if (label.isNullOrBlank()) {
+            updated.remove(packageName)
+        } else {
+            updated[packageName] = label.trim()
+        }
+        saveLabelOverrides(updated)
     }
 
     private fun savePolicies(policies: List<AppPolicy>) {
@@ -218,19 +247,24 @@ class AppPolicyStore(private val context: Context) {
                 attemptLogs = emptyMap(),
                 hasLogs = false,
                 globalRedirect = null,
-                hasGlobalRedirect = false
+                hasGlobalRedirect = false,
+                labelOverrides = emptyMap(),
+                hasLabelOverrides = false
             )
         }
         val obj = JSONObject(trimmed)
         val policies = readPoliciesFromArray(obj.optJSONArray("policies") ?: JSONArray())
         val hasLogs = obj.has("attemptLogs")
         val hasGlobalRedirect = obj.has("globalRedirect")
+        val hasLabelOverrides = obj.has("labelOverrides")
         return ImportPayload(
             policies = policies,
             attemptLogs = readAttemptLogsFrom(obj.optJSONObject("attemptLogs")),
             hasLogs = hasLogs,
             globalRedirect = obj.optString("globalRedirect", "").takeIf { it.isNotBlank() },
-            hasGlobalRedirect = hasGlobalRedirect
+            hasGlobalRedirect = hasGlobalRedirect,
+            labelOverrides = readLabelOverridesFrom(obj.optJSONObject("labelOverrides")),
+            hasLabelOverrides = hasLabelOverrides
         )
     }
 
@@ -248,11 +282,12 @@ class AppPolicyStore(private val context: Context) {
         sourcePackage: String,
         url: String,
         timestamp: Long,
-        outcome: LinkOutcome
+        outcome: LinkOutcome,
+        sourceHint: String?
     ) {
         val logs = readAttemptLogs()
         val entries = logs[sourcePackage]?.toMutableList() ?: mutableListOf()
-        entries.add(LinkAttempt(url = url, timestamp = timestamp, outcome = outcome))
+        entries.add(LinkAttempt(url = url, timestamp = timestamp, outcome = outcome, sourceHint = sourceHint))
         val trimmed = if (entries.size > MAX_HISTORY_PER_APP) {
             entries.takeLast(MAX_HISTORY_PER_APP)
         } else {
@@ -280,8 +315,11 @@ class AppPolicyStore(private val context: Context) {
                 val url = obj.optString("url", "")
                 val timestamp = obj.optLong("timestamp", 0L)
                 val outcome = LinkOutcome.fromStored(obj.optString("outcome", ""))
+                val sourceHint = obj.optString("sourceHint", "").takeIf { it.isNotBlank() }
                 if (url.isNotBlank() && timestamp > 0L) {
-                    entries.add(LinkAttempt(url = url, timestamp = timestamp, outcome = outcome))
+                    entries.add(
+                        LinkAttempt(url = url, timestamp = timestamp, outcome = outcome, sourceHint = sourceHint)
+                    )
                 }
             }
             result[packageName] = entries
@@ -303,6 +341,9 @@ class AppPolicyStore(private val context: Context) {
                 obj.put("url", entry.url)
                 obj.put("timestamp", entry.timestamp)
                 obj.put("outcome", entry.outcome.name)
+                if (!entry.sourceHint.isNullOrBlank()) {
+                    obj.put("sourceHint", entry.sourceHint)
+                }
                 array.put(obj)
             }
             root.put(packageName, array)
@@ -333,14 +374,49 @@ class AppPolicyStore(private val context: Context) {
         val attemptLogs: Map<String, List<LinkAttempt>>,
         val hasLogs: Boolean,
         val globalRedirect: String?,
-        val hasGlobalRedirect: Boolean
+        val hasGlobalRedirect: Boolean,
+        val labelOverrides: Map<String, String>,
+        val hasLabelOverrides: Boolean
     )
+
+    private fun getAllLabelOverrides(): Map<String, String> {
+        val raw = prefs.getString(KEY_LABEL_OVERRIDES, null) ?: return emptyMap()
+        return readLabelOverridesFrom(JSONObject(raw))
+    }
+
+    private fun saveLabelOverrides(overrides: Map<String, String>) {
+        val obj = writeLabelOverrides(overrides)
+        prefs.edit().putString(KEY_LABEL_OVERRIDES, obj.toString()).apply()
+    }
+
+    private fun readLabelOverridesFrom(root: JSONObject?): Map<String, String> {
+        if (root == null) return emptyMap()
+        val result = mutableMapOf<String, String>()
+        val keys = root.keys()
+        while (keys.hasNext()) {
+            val packageName = keys.next()
+            val label = root.optString(packageName, "").trim()
+            if (packageName.isNotBlank() && label.isNotBlank()) {
+                result[packageName] = label
+            }
+        }
+        return result
+    }
+
+    private fun writeLabelOverrides(overrides: Map<String, String>): JSONObject {
+        val obj = JSONObject()
+        overrides.forEach { (packageName, label) ->
+            obj.put(packageName, label)
+        }
+        return obj
+    }
 
     companion object {
         private const val PREFS_NAME = "block_store_links"
         private const val KEY_POLICIES = "policies"
         private const val KEY_ATTEMPT_LOGS = "attempt_logs"
         private const val KEY_GLOBAL_REDIRECT = "global_redirect"
+        private const val KEY_LABEL_OVERRIDES = "label_overrides"
         private const val MAX_HISTORY_PER_APP = 200
     }
 }

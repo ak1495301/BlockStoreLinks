@@ -27,6 +27,7 @@ class LinkInterceptorActivity : AppCompatActivity() {
         }
 
         val sourcePackage = resolveSourcePackage(intent) ?: UNKNOWN_PACKAGE
+        val sourceHint = if (sourcePackage == UNKNOWN_PACKAGE) buildSourceHint(intent) else null
         val policy = store.getPolicy(sourcePackage)
         val allowlist = policy?.allowlistPatterns ?: emptyList()
         val allowlistMatch = if (allowlist.isNotEmpty()) {
@@ -41,22 +42,28 @@ class LinkInterceptorActivity : AppCompatActivity() {
         val timestamp = System.currentTimeMillis()
 
         if (allowlist.isNotEmpty() && allowlistMatch == null) {
-            store.recordAttempt(sourcePackage, link.toString(), timestamp, LinkOutcome.ALLOWLIST_BLOCKED)
+            store.recordAttempt(
+                sourcePackage,
+                link.toString(),
+                timestamp,
+                LinkOutcome.ALLOWLIST_BLOCKED,
+                sourceHint
+            )
             showBlocked(link.toString(), getString(R.string.allowlist_blocked_message))
             return
         }
 
         when (action) {
             LinkAction.DENY -> {
-                store.recordAttempt(sourcePackage, link.toString(), timestamp, LinkOutcome.DENIED)
+                store.recordAttempt(sourcePackage, link.toString(), timestamp, LinkOutcome.DENIED, sourceHint)
                 showBlocked(link.toString(), getString(R.string.denied_message))
             }
             LinkAction.ASK -> {
-                store.recordAttempt(sourcePackage, link.toString(), timestamp, LinkOutcome.ASKED)
+                store.recordAttempt(sourcePackage, link.toString(), timestamp, LinkOutcome.ASKED, sourceHint)
                 showAskDialog(sourcePackage, link.toString(), timestamp, resolvedRedirect)
             }
             LinkAction.ALLOW -> {
-                handleAllowedLink(sourcePackage, link, timestamp, resolvedRedirect)
+                handleAllowedLink(sourcePackage, link, timestamp, resolvedRedirect, sourceHint)
             }
         }
     }
@@ -65,16 +72,23 @@ class LinkInterceptorActivity : AppCompatActivity() {
         sourcePackage: String,
         link: Uri,
         timestamp: Long,
-        redirectPackage: String?
+        redirectPackage: String?,
+        sourceHint: String?
     ) {
         if (redirectPackage != null) {
             if (forwardToPackage(link, redirectPackage)) {
-                store.recordAttempt(sourcePackage, link.toString(), timestamp, LinkOutcome.REDIRECTED)
+                store.recordAttempt(
+                    sourcePackage,
+                    link.toString(),
+                    timestamp,
+                    LinkOutcome.REDIRECTED,
+                    sourceHint
+                )
                 finish()
                 return
             }
         }
-        store.recordAttempt(sourcePackage, link.toString(), timestamp, LinkOutcome.ALLOWED)
+        store.recordAttempt(sourcePackage, link.toString(), timestamp, LinkOutcome.ALLOWED, sourceHint)
         val browserIntent = Intent(this, BrowserActivity::class.java).apply {
             putExtra(BrowserActivity.EXTRA_URL, link.toString())
         }
@@ -250,6 +264,7 @@ class LinkInterceptorActivity : AppCompatActivity() {
     }
 
     private fun resolveAppLabel(packageName: String): String {
+        store.getLabelOverride(packageName)?.let { return it }
         if (packageName == UNKNOWN_PACKAGE) {
             return getString(R.string.unknown_app_no_referrer)
         }
@@ -287,6 +302,32 @@ class LinkInterceptorActivity : AppCompatActivity() {
             return trimmed.removePrefix("package:").takeIf { it.matches(PACKAGE_REGEX) }
         }
         return trimmed.takeIf { it.matches(PACKAGE_REGEX) }
+    }
+
+    private fun buildSourceHint(intent: Intent): String? {
+        val parts = mutableListOf<String>()
+        val activityReferrer = referrer
+        if (activityReferrer != null) {
+            parts.add("referrer=$activityReferrer")
+        }
+        val extraReferrer = getParcelableUri(intent, Intent.EXTRA_REFERRER)
+        if (extraReferrer != null && extraReferrer != activityReferrer) {
+            parts.add("extra_referrer=$extraReferrer")
+        }
+        val referrerName = intent.getStringExtra(EXTRA_REFERRER_NAME)
+        if (!referrerName.isNullOrBlank()) {
+            parts.add("referrer_name=$referrerName")
+        }
+        val intentPackage = intent.`package`
+        if (!intentPackage.isNullOrBlank()) {
+            parts.add("intent_package=$intentPackage")
+        }
+        val extras = intent.extras?.keySet()?.sorted()?.joinToString(",")
+        if (!extras.isNullOrBlank()) {
+            parts.add("extras=$extras")
+        }
+        if (parts.isEmpty()) return null
+        return parts.joinToString(" | ").take(MAX_HINT_LENGTH)
     }
 
     private fun findAllowlistMatch(url: String, allowlist: List<String>): AllowlistMatch? {
@@ -336,5 +377,6 @@ class LinkInterceptorActivity : AppCompatActivity() {
         private const val MAX_REGEX_LENGTH = 200
         private const val MAX_REGEX_PATTERNS = 20
         private val PACKAGE_REGEX = Regex("^[a-zA-Z0-9_.]+$")
+        private const val MAX_HINT_LENGTH = 200
     }
 }

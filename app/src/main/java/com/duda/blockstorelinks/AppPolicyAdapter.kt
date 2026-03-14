@@ -23,6 +23,7 @@ class AppPolicyAdapter(
 ) : RecyclerView.Adapter<AppPolicyAdapter.PolicyViewHolder>() {
 
     private val items = mutableListOf<AppPolicy>()
+    private val store = AppPolicyStore(context)
 
     fun submitList(policies: List<AppPolicy>) {
         val diffResult = DiffUtil.calculateDiff(AppPolicyDiff(items, policies))
@@ -107,6 +108,7 @@ class AppPolicyAdapter(
             }
 
         private fun resolveAppLabel(packageName: String): String {
+            store.getLabelOverride(packageName)?.let { return it }
             if (packageName == UNKNOWN_PACKAGE) {
                 return context.getString(R.string.unknown_app_no_referrer)
             }
