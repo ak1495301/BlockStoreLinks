@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
@@ -45,6 +46,7 @@ class AppPolicyAdapter(
     override fun getItemCount(): Int = items.size
 
     inner class PolicyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val appIcon: ImageView = itemView.findViewById(R.id.appIcon)
         private val appName: TextView = itemView.findViewById(R.id.appName)
         private val appPackage: TextView = itemView.findViewById(R.id.appPackage)
         private val attempts: TextView = itemView.findViewById(R.id.attempts)
@@ -59,6 +61,7 @@ class AppPolicyAdapter(
         private val resetAttempts: Button = itemView.findViewById(R.id.resetAttempts)
 
         fun bind(policy: AppPolicy) {
+            appIcon.setImageDrawable(resolveAppIcon(policy.packageName))
             appName.text = resolveAppLabel(policy.packageName)
             appPackage.text = policy.packageName
             attempts.text = context.getString(R.string.attempts_count, policy.attemptCount)
@@ -116,9 +119,17 @@ class AppPolicyAdapter(
                 val info = context.packageManager.getApplicationInfo(packageName, 0)
                 context.packageManager.getApplicationLabel(info).toString()
             } catch (ex: PackageManager.NameNotFoundException) {
-                context.getString(R.string.unknown_app)
+                packageName
             }
         }
+
+        private fun resolveAppIcon(packageName: String) =
+            try {
+                val info = context.packageManager.getApplicationInfo(packageName, 0)
+                info.loadIcon(context.packageManager)
+            } catch (ex: Exception) {
+                context.getDrawable(android.R.drawable.sym_def_app_icon)
+            }
     }
 
     private class AppPolicyDiff(

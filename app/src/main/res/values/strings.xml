@@ -20,6 +20,7 @@
     <string name="attempts_count">Attempts: %1$d</string>
     <string name="unknown_app">Unknown app</string>
     <string name="unknown_app_no_referrer">Unknown app (no referrer)</string>
+    <string name="app_icon">App icon</string>
     <string name="pick_browser">Pick a browser</string>
     <string name="no_external_browser">No external browser found.</string>
     <string name="set_label">Set label</string>
@@ -48,6 +49,11 @@
     <string name="import_success_merge">Import complete (merged)</string>
     <string name="copy_policies">Copy policies</string>
     <string name="copy_done">Policies copied</string>
+    <string name="add_app_rule">Add app rule</string>
+    <string name="add_app_rule_title">Select an app</string>
+    <string name="add_app_rule_added">Rule added</string>
+    <string name="add_app_rule_exists">Rule already exists</string>
+    <string name="add_app_rule_invalid">Invalid package name</string>
     <string name="reset_attempts">Reset count</string>
     <string name="reset_all_attempts">Reset all counts</string>
     <string name="reset_confirm_title">Reset all counts?</string>

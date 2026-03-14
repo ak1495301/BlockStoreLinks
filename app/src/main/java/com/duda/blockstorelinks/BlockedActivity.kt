@@ -1,7 +1,8 @@
 package com.duda.blockstorelinks
 
+import android.content.ActivityNotFoundException
+import android.content.ComponentName
 import android.content.Intent
-import android.content.pm.ResolveInfo
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Button
@@ -32,32 +33,19 @@ class BlockedActivity : AppCompatActivity() {
         val baseIntent = Intent(Intent.ACTION_VIEW, uri).apply {
             addCategory(Intent.CATEGORY_BROWSABLE)
         }
-        val choices = packageManager.queryIntentActivities(baseIntent, 0)
-            .filter { it.activityInfo.packageName != packageName }
-            .sortedBy { it.loadLabel(packageManager).toString().lowercase() }
-            .map { info -> toTargetedIntent(uri, info) }
-
-        if (choices.isEmpty()) {
+        val chooser = Intent.createChooser(baseIntent, getString(R.string.pick_browser)).apply {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                val exclude = arrayOf(ComponentName(this@BlockedActivity, LinkInterceptorActivity::class.java))
+                putExtra(Intent.EXTRA_EXCLUDE_COMPONENTS, exclude)
+            }
+        }
+        try {
+            startActivity(chooser)
+        } catch (ex: ActivityNotFoundException) {
             Toast.makeText(this, getString(R.string.no_external_browser), Toast.LENGTH_SHORT).show()
             startActivity(Intent(this, BrowserActivity::class.java).apply {
                 putExtra(BrowserActivity.EXTRA_URL, url)
             })
-            return
-        }
-
-        val chooser = Intent.createChooser(choices.first(), getString(R.string.pick_browser)).apply {
-            val extras = choices.drop(1).toTypedArray()
-            if (extras.isNotEmpty()) {
-                putExtra(Intent.EXTRA_INITIAL_INTENTS, extras)
-            }
-        }
-        startActivity(chooser)
-    }
-
-    private fun toTargetedIntent(uri: Uri, info: ResolveInfo): Intent {
-        return Intent(Intent.ACTION_VIEW, uri).apply {
-            setPackage(info.activityInfo.packageName)
-            addCategory(Intent.CATEGORY_BROWSABLE)
         }
     }
 

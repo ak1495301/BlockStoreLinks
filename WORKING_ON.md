@@ -7,3 +7,5 @@
 - External browser picker now filters out this app and falls back to the built-in WebView when needed.
 - Added source hints in link history (action/categories/referrer extras and browser app id/package).
 - Added manual label overrides for app entries.
+- Added app icons to the policy list and fallback to package names when labels cannot be resolved.
+- Added an "Add app rule" picker to create rules from installed apps or manual package names.

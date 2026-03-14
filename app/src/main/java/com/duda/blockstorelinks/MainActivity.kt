@@ -98,6 +98,7 @@ class MainActivity : AppCompatActivity() {
         val exportPolicies = findViewById<MaterialButton>(R.id.exportPolicies)
         val importPolicies = findViewById<MaterialButton>(R.id.importPolicies)
         val copyPolicies = findViewById<MaterialButton>(R.id.copyPolicies)
+        val addAppRule = findViewById<MaterialButton>(R.id.addAppRule)
         val resetAllCounts = findViewById<MaterialButton>(R.id.resetAllCounts)
         val globalRedirect = findViewById<MaterialButton>(R.id.globalRedirect)
         exportPolicies.setOnClickListener {
@@ -117,6 +118,9 @@ class MainActivity : AppCompatActivity() {
             val clip = ClipData.newPlainText(getString(R.string.export_policies), json)
             clipboard.setPrimaryClip(clip)
             Toast.makeText(this, getString(R.string.copy_done), Toast.LENGTH_SHORT).show()
+        }
+        addAppRule.setOnClickListener {
+            showAddAppRuleDialog()
         }
         resetAllCounts.setOnClickListener {
             showResetAllDialog()
@@ -199,6 +203,55 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             .show()
+    }
+
+    private fun showAddAppRuleDialog() {
+        val apps = getLaunchableApps()
+        val labels = mutableListOf<String>()
+        val packages = mutableListOf<String?>()
+
+        apps.forEach { info ->
+            labels.add(info.loadLabel(packageManager).toString())
+            packages.add(info.activityInfo.packageName)
+        }
+
+        labels.add(getString(R.string.enter_package))
+        packages.add(MANUAL_ENTRY)
+
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.add_app_rule_title))
+            .setItems(labels.toTypedArray()) { _, which ->
+                val selectedPackage = packages[which]
+                if (selectedPackage == MANUAL_ENTRY) {
+                    showPackageEntryDialog(
+                        title = getString(R.string.enter_package_title),
+                        initialValue = null,
+                        onConfirmed = { manualPackage ->
+                            addRuleForPackage(manualPackage)
+                        }
+                    )
+                } else {
+                    addRuleForPackage(selectedPackage)
+                }
+            }
+            .show()
+    }
+
+    private fun addRuleForPackage(packageName: String?) {
+        val trimmed = packageName?.trim().orEmpty()
+        if (trimmed.isEmpty()) return
+        if (!isValidPackage(trimmed)) {
+            Toast.makeText(this, getString(R.string.add_app_rule_invalid), Toast.LENGTH_SHORT).show()
+            return
+        }
+        val existing = store.getPolicy(trimmed)
+        if (existing != null) {
+            Toast.makeText(this, getString(R.string.add_app_rule_exists), Toast.LENGTH_SHORT).show()
+            return
+        }
+        store.setLinkAction(trimmed, LinkAction.ASK)
+        refreshList()
+        Toast.makeText(this, getString(R.string.add_app_rule_added), Toast.LENGTH_SHORT).show()
     }
 
     private fun showGlobalRedirectPicker() {
@@ -471,6 +524,16 @@ class MainActivity : AppCompatActivity() {
         return resolved.sortedBy { it.loadLabel(packageManager).toString().lowercase() }
     }
 
+    private fun getLaunchableApps(): List<ResolveInfo> {
+        val intent = Intent(Intent.ACTION_MAIN).apply {
+            addCategory(Intent.CATEGORY_LAUNCHER)
+        }
+        val resolved = packageManager.queryIntentActivities(intent, 0)
+            .filter { it.activityInfo.packageName != packageName }
+            .distinctBy { it.activityInfo.packageName }
+        return resolved.sortedBy { it.loadLabel(packageManager).toString().lowercase() }
+    }
+
     private fun matchesFilter(policy: AppPolicy): Boolean {
         val query = filterText.trim().lowercase()
         if (query.isEmpty()) return true
@@ -493,7 +556,7 @@ class MainActivity : AppCompatActivity() {
             val info = packageManager.getApplicationInfo(packageName, 0)
             packageManager.getApplicationLabel(info).toString()
         } catch (ex: Exception) {
-            getString(R.string.unknown_app)
+            packageName
         }
     }
 

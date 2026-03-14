@@ -11,9 +11,11 @@ A lightweight Android browser that can intercept links from other apps, track at
 - Built-in WebView browser for allowed links.
 - Per-app link history with timestamped entries and optional source hints.
 - Filter and sort the app list by attempts or name.
+- App list includes installed app icons when available.
 - Optional per-app allowlist patterns to restrict which URLs can open, including regex with a `re:` prefix.
 - Allowlist entries can optionally redirect a matching link via `pattern => com.example.browser`.
 - Manual label overrides for app entries (including unknown sources).
+- Add app rules proactively by selecting an installed app or entering a package name.
 - Export or import the full policy list as JSON, including global redirect, link history, and label overrides.
 - Import preview shows how many apps are in the pasted JSON.
 - Copy policy JSON to the clipboard.
@@ -55,6 +57,7 @@ A lightweight Android browser that can intercept links from other apps, track at
 - Regex allowlist safety limits: max 20 regex patterns per app, max 200 characters per regex.
 - The allowlist editor validates `re:` patterns and will refuse invalid or too-long regex entries.
 - The external browser chooser filters out Block Store Links itself; if no other browsers are installed, it falls back to the built-in WebView.
+- When package visibility blocks resolving a label, the package name is shown instead of an unknown label.
 - Label overrides are included in export/import.
 
 ## Project Structure

@@ -281,7 +281,7 @@ class LinkInterceptorActivity : AppCompatActivity() {
             val info = packageManager.getApplicationInfo(packageName, 0)
             packageManager.getApplicationLabel(info).toString()
         } catch (ex: Exception) {
-            getString(R.string.unknown_app)
+            packageName
         }
     }
 
