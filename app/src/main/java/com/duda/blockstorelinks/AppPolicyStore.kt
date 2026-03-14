@@ -31,16 +31,9 @@ class AppPolicyStore(private val context: Context) {
         val array = JSONArray(raw)
         val policies = mutableListOf<AppPolicy>()
         for (i in 0 until array.length()) {
-            val obj = array.getJSONObject(i)
-            policies.add(
-                AppPolicy(
-                    packageName = obj.getString("packageName"),
-                    attemptCount = obj.optInt("attemptCount", 0),
-                    blocked = obj.optBoolean("blocked", false),
-                    redirectPackage = obj.optString("redirectPackage", null).takeIf { it.isNotBlank() },
-                    allowlistPatterns = readAllowlist(obj)
-                )
-            )
+            val obj = array.optJSONObject(i) ?: continue
+            val policy = readPolicy(obj) ?: continue
+            policies.add(policy)
         }
         return policies.sortedByDescending { it.attemptCount }
     }
@@ -73,18 +66,55 @@ class AppPolicyStore(private val context: Context) {
         savePolicies(policies)
     }
 
+    fun exportPoliciesJson(): String {
+        val policies = getPolicies()
+        val array = JSONArray()
+        policies.forEach { policy ->
+            array.put(writePolicy(policy))
+        }
+        return array.toString()
+    }
+
+    fun replacePoliciesFromJson(raw: String): Boolean {
+        val array = JSONArray(raw)
+        val policies = mutableListOf<AppPolicy>()
+        for (i in 0 until array.length()) {
+            val obj = array.optJSONObject(i) ?: continue
+            val policy = readPolicy(obj) ?: continue
+            policies.add(policy)
+        }
+        savePolicies(policies)
+        return true
+    }
+
     private fun savePolicies(policies: List<AppPolicy>) {
         val array = JSONArray()
         policies.forEach { policy ->
-            val obj = JSONObject()
-            obj.put("packageName", policy.packageName)
-            obj.put("attemptCount", policy.attemptCount)
-            obj.put("blocked", policy.blocked)
-            obj.put("redirectPackage", policy.redirectPackage ?: "")
-            obj.put("allowlist", JSONArray(policy.allowlistPatterns))
-            array.put(obj)
+            array.put(writePolicy(policy))
         }
         prefs.edit().putString(KEY_POLICIES, array.toString()).apply()
+    }
+
+    private fun readPolicy(obj: JSONObject): AppPolicy? {
+        val packageName = obj.optString("packageName", "").trim()
+        if (packageName.isEmpty()) return null
+        return AppPolicy(
+            packageName = packageName,
+            attemptCount = obj.optInt("attemptCount", 0),
+            blocked = obj.optBoolean("blocked", false),
+            redirectPackage = obj.optString("redirectPackage", null).takeIf { it.isNotBlank() },
+            allowlistPatterns = readAllowlist(obj)
+        )
+    }
+
+    private fun writePolicy(policy: AppPolicy): JSONObject {
+        val obj = JSONObject()
+        obj.put("packageName", policy.packageName)
+        obj.put("attemptCount", policy.attemptCount)
+        obj.put("blocked", policy.blocked)
+        obj.put("redirectPackage", policy.redirectPackage ?: "")
+        obj.put("allowlist", JSONArray(policy.allowlistPatterns))
+        return obj
     }
 
     private fun readAllowlist(obj: JSONObject): List<String> {

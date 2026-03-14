@@ -15,6 +15,8 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.textfield.TextInputEditText
 import android.widget.EditText
+import android.text.InputType
+import android.widget.Toast
 
 class MainActivity : AppCompatActivity() {
     private lateinit var store: AppPolicyStore
@@ -69,6 +71,20 @@ class MainActivity : AppCompatActivity() {
             if (!isChecked) return@addOnButtonCheckedListener
             sortMode = if (checkedId == sortName.id) SortMode.NAME else SortMode.ATTEMPTS
             refreshList()
+        }
+
+        val exportPolicies = findViewById<MaterialButton>(R.id.exportPolicies)
+        val importPolicies = findViewById<MaterialButton>(R.id.importPolicies)
+        exportPolicies.setOnClickListener {
+            val json = store.exportPoliciesJson()
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, json)
+            }
+            startActivity(Intent.createChooser(intent, getString(R.string.export_policies)))
+        }
+        importPolicies.setOnClickListener {
+            showImportDialog()
         }
 
         refreshList()
@@ -128,6 +144,31 @@ class MainActivity : AppCompatActivity() {
                     .filter { it.isNotEmpty() }
                 store.setAllowlist(policy.packageName, patterns)
                 refreshList()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun showImportDialog() {
+        val input = EditText(this).apply {
+            hint = getString(R.string.import_hint)
+            minLines = 6
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.import_policies))
+            .setView(input)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                val raw = input.text.toString().trim()
+                val payload = if (raw.isEmpty()) "[]" else raw
+                try {
+                    store.replacePoliciesFromJson(payload)
+                    refreshList()
+                    Toast.makeText(this, getString(R.string.import_success), Toast.LENGTH_SHORT).show()
+                } catch (ex: Exception) {
+                    Toast.makeText(this, getString(R.string.import_failed), Toast.LENGTH_SHORT).show()
+                }
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()

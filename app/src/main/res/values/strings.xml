@@ -17,4 +17,9 @@
     <string name="allowlist_hint">One pattern per line</string>
     <string name="allowlist_count">Allowlist entries</string>
     <string name="allowlist_blocked_message">This link does not match the allowlist for this app.</string>
+    <string name="export_policies">Export policies</string>
+    <string name="import_policies">Import policies</string>
+    <string name="import_hint">Paste exported JSON here</string>
+    <string name="import_failed">Import failed: invalid JSON</string>
+    <string name="import_success">Import complete</string>
 </resources>

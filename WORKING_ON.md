@@ -3,3 +3,4 @@
 - Added app list UI for managing per-app policies plus filter/sort controls.
 - Added Gradle wrapper files for reproducible builds.
 - Added per-app allowlist patterns to restrict which URLs can open.
+- Added export/import for policy list via JSON sharing.

@@ -60,6 +60,30 @@
                 android:layout_weight="1"
                 android:text="@string/sort_name" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/exportPolicies"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/export_policies" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/importPolicies"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:text="@string/import_policies" />
+        </LinearLayout>
     </LinearLayout>
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
