@@ -25,6 +25,17 @@ class LinkInterceptorActivity : AppCompatActivity() {
         val policy = store.getPolicy(sourcePackage)
         val redirectPackage = policy?.redirectPackage
         val isBlocked = policy?.blocked ?: false
+        val allowlist = policy?.allowlistPatterns ?: emptyList()
+
+        if (allowlist.isNotEmpty() && !matchesAllowlist(link.toString(), allowlist)) {
+            val blockedIntent = Intent(this, BlockedActivity::class.java).apply {
+                putExtra(BlockedActivity.EXTRA_URL, link.toString())
+                putExtra(BlockedActivity.EXTRA_REASON, getString(R.string.allowlist_blocked_message))
+            }
+            startActivity(blockedIntent)
+            finish()
+            return
+        }
 
         if (redirectPackage != null) {
             if (forwardToPackage(link, redirectPackage)) {
@@ -72,5 +83,10 @@ class LinkInterceptorActivity : AppCompatActivity() {
             return Uri.parse(referrerName).host
         }
         return intent.`package`
+    }
+
+    private fun matchesAllowlist(url: String, allowlist: List<String>): Boolean {
+        val normalized = url.lowercase()
+        return allowlist.any { normalized.contains(it.lowercase()) }
     }
 }

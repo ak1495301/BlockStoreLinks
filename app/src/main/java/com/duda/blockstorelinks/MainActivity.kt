@@ -14,6 +14,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.textfield.TextInputEditText
+import android.widget.EditText
 
 class MainActivity : AppCompatActivity() {
     private lateinit var store: AppPolicyStore
@@ -43,6 +44,9 @@ class MainActivity : AppCompatActivity() {
             },
             onPickRedirect = { policy ->
                 showRedirectPicker(policy)
+            },
+            onEditAllowlist = { policy ->
+                showAllowlistEditor(policy)
             }
         )
         recyclerView.adapter = adapter
@@ -104,6 +108,28 @@ class MainActivity : AppCompatActivity() {
                 store.setRedirect(policy.packageName, selectedPackage)
                 refreshList()
             }
+            .show()
+    }
+
+    private fun showAllowlistEditor(policy: AppPolicy) {
+        val input = EditText(this).apply {
+            hint = getString(R.string.allowlist_hint)
+            setText(policy.allowlistPatterns.joinToString(separator = "\n"))
+            minLines = 4
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.allowlist))
+            .setView(input)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                val patterns = input.text.toString()
+                    .split("\n")
+                    .map { it.trim() }
+                    .filter { it.isNotEmpty() }
+                store.setAllowlist(policy.packageName, patterns)
+                refreshList()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
             .show()
     }
 

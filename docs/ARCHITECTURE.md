@@ -14,6 +14,7 @@
 1. Interceptor receives a link.
 2. Source app is derived from referrer fields when available.
 3. Policy lookup determines:
+   - Allowlist check: if configured, only matching URLs proceed.
    - Redirect to a chosen browser (if set).
    - Block and show a notice.
    - Open in the in-app WebView.

@@ -13,7 +13,8 @@ import com.google.android.material.switchmaterial.SwitchMaterial
 class AppPolicyAdapter(
     private val context: Context,
     private val onToggleBlocked: (AppPolicy, Boolean) -> Unit,
-    private val onPickRedirect: (AppPolicy) -> Unit
+    private val onPickRedirect: (AppPolicy) -> Unit,
+    private val onEditAllowlist: (AppPolicy) -> Unit
 ) : RecyclerView.Adapter<AppPolicyAdapter.PolicyViewHolder>() {
 
     private val items = mutableListOf<AppPolicy>()
@@ -43,6 +44,8 @@ class AppPolicyAdapter(
         private val blockedSwitch: SwitchMaterial = itemView.findViewById(R.id.blockedSwitch)
         private val redirectButton: Button = itemView.findViewById(R.id.redirectButton)
         private val redirectTarget: TextView = itemView.findViewById(R.id.redirectTarget)
+        private val allowlistButton: Button = itemView.findViewById(R.id.allowlistButton)
+        private val allowlistCount: TextView = itemView.findViewById(R.id.allowlistCount)
 
         fun bind(policy: AppPolicy) {
             appName.text = resolveAppLabel(policy.packageName)
@@ -61,6 +64,11 @@ class AppPolicyAdapter(
 
             redirectButton.setOnClickListener {
                 onPickRedirect(policy)
+            }
+
+            allowlistCount.text = context.getString(R.string.allowlist_count) + \": \" + policy.allowlistPatterns.size
+            allowlistButton.setOnClickListener {
+                onEditAllowlist(policy)
             }
         }
 

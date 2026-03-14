@@ -12,6 +12,10 @@ class BlockedActivity : AppCompatActivity() {
         setContentView(R.layout.activity_blocked)
 
         val url = intent.getStringExtra(EXTRA_URL)
+        val reason = intent.getStringExtra(EXTRA_REASON)
+        if (reason != null) {
+            findViewById<android.widget.TextView>(R.id.blockedMessage).text = reason
+        }
         val openButton = findViewById<Button>(R.id.openInBrowser)
         openButton.setOnClickListener {
             if (url != null) {
@@ -24,5 +28,6 @@ class BlockedActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_URL = "extra_url"
+        const val EXTRA_REASON = "extra_reason"
     }
 }

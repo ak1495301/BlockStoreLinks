@@ -2,3 +2,4 @@
 - Added a basic in-app WebView browser for allowed links and a blocked notice screen.
 - Added app list UI for managing per-app policies plus filter/sort controls.
 - Added Gradle wrapper files for reproducible builds.
+- Added per-app allowlist patterns to restrict which URLs can open.

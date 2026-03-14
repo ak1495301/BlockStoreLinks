@@ -16,7 +16,8 @@ class AppPolicyStore(private val context: Context) {
                     packageName = sourcePackage,
                     attemptCount = 1,
                     blocked = false,
-                    redirectPackage = null
+                    redirectPackage = null,
+                    allowlistPatterns = emptyList()
                 )
             )
         } else {
@@ -36,7 +37,8 @@ class AppPolicyStore(private val context: Context) {
                     packageName = obj.getString("packageName"),
                     attemptCount = obj.optInt("attemptCount", 0),
                     blocked = obj.optBoolean("blocked", false),
-                    redirectPackage = obj.optString("redirectPackage", null).takeIf { it.isNotBlank() }
+                    redirectPackage = obj.optString("redirectPackage", null).takeIf { it.isNotBlank() },
+                    allowlistPatterns = readAllowlist(obj)
                 )
             )
         }
@@ -50,7 +52,7 @@ class AppPolicyStore(private val context: Context) {
     fun setBlocked(packageName: String, blocked: Boolean) {
         val policies = getPolicies().toMutableList()
         val policy = policies.find { it.packageName == packageName }
-            ?: AppPolicy(packageName, 0, blocked, null).also { policies.add(it) }
+            ?: AppPolicy(packageName, 0, blocked, null, emptyList()).also { policies.add(it) }
         policy.blocked = blocked
         savePolicies(policies)
     }
@@ -58,8 +60,16 @@ class AppPolicyStore(private val context: Context) {
     fun setRedirect(packageName: String, redirectPackage: String?) {
         val policies = getPolicies().toMutableList()
         val policy = policies.find { it.packageName == packageName }
-            ?: AppPolicy(packageName, 0, false, redirectPackage).also { policies.add(it) }
+            ?: AppPolicy(packageName, 0, false, redirectPackage, emptyList()).also { policies.add(it) }
         policy.redirectPackage = redirectPackage
+        savePolicies(policies)
+    }
+
+    fun setAllowlist(packageName: String, allowlistPatterns: List<String>) {
+        val policies = getPolicies().toMutableList()
+        val policy = policies.find { it.packageName == packageName }
+            ?: AppPolicy(packageName, 0, false, null, allowlistPatterns).also { policies.add(it) }
+        policy.allowlistPatterns = allowlistPatterns
         savePolicies(policies)
     }
 
@@ -71,9 +81,22 @@ class AppPolicyStore(private val context: Context) {
             obj.put("attemptCount", policy.attemptCount)
             obj.put("blocked", policy.blocked)
             obj.put("redirectPackage", policy.redirectPackage ?: "")
+            obj.put("allowlist", JSONArray(policy.allowlistPatterns))
             array.put(obj)
         }
         prefs.edit().putString(KEY_POLICIES, array.toString()).apply()
+    }
+
+    private fun readAllowlist(obj: JSONObject): List<String> {
+        val array = obj.optJSONArray("allowlist") ?: return emptyList()
+        val result = mutableListOf<String>()
+        for (i in 0 until array.length()) {
+            val value = array.optString(i, "").trim()
+            if (value.isNotEmpty()) {
+                result.add(value)
+            }
+        }
+        return result
     }
 
     companion object {

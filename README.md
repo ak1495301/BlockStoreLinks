@@ -9,11 +9,13 @@ A lightweight Android browser that can intercept links from other apps, track at
 - Optional per-app redirect to a different browser.
 - Built-in WebView browser for allowed links.
 - Filter and sort the app list by attempts or name.
+- Optional per-app allowlist patterns to restrict which URLs can open.
 
 ## How It Works
 - `LinkInterceptorActivity` receives browser intents and attributes the source app via the referrer when available.
 - Attempts are stored in `SharedPreferences` as JSON.
 - Policies determine whether to block, redirect, or open inside the built-in WebView.
+- If an allowlist exists for an app, only URLs containing those patterns are allowed.
 
 ## Setup
 - Open the project in Android Studio.

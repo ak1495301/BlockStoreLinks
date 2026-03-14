@@ -13,4 +13,8 @@
     <string name="filter_apps">Filter apps</string>
     <string name="sort_attempts">Sort: Attempts</string>
     <string name="sort_name">Sort: Name</string>
+    <string name="allowlist">Allowed URLs</string>
+    <string name="allowlist_hint">One pattern per line</string>
+    <string name="allowlist_count">Allowlist entries</string>
+    <string name="allowlist_blocked_message">This link does not match the allowlist for this app.</string>
 </resources>
