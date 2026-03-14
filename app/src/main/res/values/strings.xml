@@ -25,6 +25,8 @@
     <string name="import_merge">Merge</string>
     <string name="import_replace">Replace</string>
     <string name="import_success_merge">Import complete (merged)</string>
+    <string name="copy_policies">Copy policies</string>
+    <string name="copy_done">Policies copied</string>
     <string name="reset_attempts">Reset count</string>
     <string name="reset_all_attempts">Reset all counts</string>
     <string name="reset_confirm_title">Reset all counts?</string>

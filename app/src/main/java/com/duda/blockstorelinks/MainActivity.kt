@@ -17,6 +17,8 @@ import com.google.android.material.textfield.TextInputEditText
 import android.widget.EditText
 import android.text.InputType
 import android.widget.Toast
+import android.content.ClipData
+import android.content.ClipboardManager
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 
@@ -81,6 +83,7 @@ class MainActivity : AppCompatActivity() {
 
         val exportPolicies = findViewById<MaterialButton>(R.id.exportPolicies)
         val importPolicies = findViewById<MaterialButton>(R.id.importPolicies)
+        val copyPolicies = findViewById<MaterialButton>(R.id.copyPolicies)
         val resetAllCounts = findViewById<MaterialButton>(R.id.resetAllCounts)
         exportPolicies.setOnClickListener {
             val json = store.exportPoliciesJson()
@@ -92,6 +95,13 @@ class MainActivity : AppCompatActivity() {
         }
         importPolicies.setOnClickListener {
             showImportDialog()
+        }
+        copyPolicies.setOnClickListener {
+            val json = store.exportPoliciesJson()
+            val clipboard = getSystemService(ClipboardManager::class.java)
+            val clip = ClipData.newPlainText(getString(R.string.export_policies), json)
+            clipboard.setPrimaryClip(clip)
+            Toast.makeText(this, getString(R.string.copy_done), Toast.LENGTH_SHORT).show()
         }
         resetAllCounts.setOnClickListener {
             showResetAllDialog()
