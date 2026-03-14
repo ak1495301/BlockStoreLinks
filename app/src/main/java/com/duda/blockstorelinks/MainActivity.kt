@@ -427,7 +427,7 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, getString(R.string.history_empty), Toast.LENGTH_SHORT).show()
             return
         }
-        val items = history.map { formatAttempt(it) }
+        val items = history.map { formatAttemptCompact(it) }
         AlertDialog.Builder(this)
             .setTitle(getString(R.string.history_title, getAppLabel(policy.packageName)))
             .setItems(items.toTypedArray(), null)
@@ -435,7 +435,7 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun formatAttempt(attempt: LinkAttempt): String {
+    private fun formatAttemptCompact(attempt: LinkAttempt): String {
         val date = dateFormat.format(Date(attempt.timestamp))
         val outcome = when (attempt.outcome) {
             LinkOutcome.ALLOWED -> getString(R.string.outcome_allowed)
@@ -444,7 +444,13 @@ class MainActivity : AppCompatActivity() {
             LinkOutcome.ASKED -> getString(R.string.outcome_asked)
             LinkOutcome.ALLOWLIST_BLOCKED -> getString(R.string.outcome_allowlist_blocked)
         }
-        return getString(R.string.history_entry, date, outcome, attempt.url)
+        val url = attempt.url.trim()
+        val compactUrl = if (url.length > MAX_HISTORY_URL_CHARS) {
+            url.take(MAX_HISTORY_URL_CHARS).trimEnd() + "…"
+        } else {
+            url
+        }
+        return getString(R.string.history_entry_compact, date, outcome, compactUrl)
     }
 
     private fun getBrowserTargets(): List<ResolveInfo> {
@@ -492,5 +498,6 @@ class MainActivity : AppCompatActivity() {
         private const val MAX_REGEX_PATTERNS = 20
         private const val MANUAL_ENTRY = "__manual_entry__"
         private val PACKAGE_REGEX = Regex("^[a-zA-Z0-9_.]+$")
+        private const val MAX_HISTORY_URL_CHARS = 80
     }
 }

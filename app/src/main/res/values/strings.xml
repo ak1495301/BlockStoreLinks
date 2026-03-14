@@ -56,7 +56,7 @@
     <string name="enter_package_hint">com.example.browser</string>
     <string name="history_title">Link history for %1$s</string>
     <string name="history_empty">No links recorded for this app yet.</string>
-    <string name="history_entry">%1$s • %2$s\n%3$s</string>
+    <string name="history_entry_compact">%1$s • %2$s — %3$s</string>
     <string name="outcome_allowed">Allowed</string>
     <string name="outcome_denied">Denied</string>
     <string name="outcome_redirected">Redirected</string>
