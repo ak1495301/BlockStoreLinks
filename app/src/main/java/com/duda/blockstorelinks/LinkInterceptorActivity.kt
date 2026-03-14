@@ -31,18 +31,25 @@ class LinkInterceptorActivity : AppCompatActivity() {
         val sourceHint = buildSourceHint(intent)
         val policy = store.getPolicy(sourcePackage)
         val allowlist = policy?.allowlistPatterns ?: emptyList()
+        val redirectRules = policy?.redirectRules ?: emptyList()
+        val redirectRuleMatch = if (redirectRules.isNotEmpty()) {
+            findRedirectRuleMatch(link.toString(), redirectRules)
+        } else {
+            null
+        }
         val allowlistMatch = if (allowlist.isNotEmpty()) {
             findAllowlistMatch(link.toString(), allowlist)
         } else {
             AllowlistMatch(null)
         }
-        val resolvedRedirect = allowlistMatch?.redirectPackage
+        val resolvedRedirect = redirectRuleMatch?.redirectPackage
+            ?: allowlistMatch?.redirectPackage
             ?: policy?.redirectPackage
             ?: store.getGlobalRedirect()
         val action = policy?.linkAction ?: LinkAction.ALLOW
         val timestamp = System.currentTimeMillis()
 
-        if (allowlist.isNotEmpty() && allowlistMatch == null) {
+        if (allowlist.isNotEmpty() && allowlistMatch == null && redirectRuleMatch == null) {
             store.recordAttempt(
                 sourcePackage,
                 link.toString(),
@@ -386,6 +393,32 @@ class LinkInterceptorActivity : AppCompatActivity() {
         return null
     }
 
+    private fun findRedirectRuleMatch(url: String, rules: List<String>): AllowlistMatch? {
+        val normalized = url.lowercase()
+        var regexCount = 0
+        rules.forEach { raw ->
+            val entry = parseRedirectRuleEntry(raw) ?: return@forEach
+            val value = entry.pattern
+            if (value.startsWith(REGEX_PREFIX)) {
+                if (regexCount >= MAX_REGEX_PATTERNS) return@forEach
+                regexCount += 1
+                val patternBody = value.removePrefix(REGEX_PREFIX)
+                if (patternBody.length > MAX_REGEX_LENGTH) return@forEach
+                try {
+                    val pattern = Pattern.compile(patternBody, Pattern.CASE_INSENSITIVE)
+                    if (pattern.matcher(url).find()) {
+                        return AllowlistMatch(entry.redirectPackage)
+                    }
+                } catch (ex: PatternSyntaxException) {
+                    return@forEach
+                }
+            } else if (normalized.contains(value.lowercase())) {
+                return AllowlistMatch(entry.redirectPackage)
+            }
+        }
+        return null
+    }
+
     private fun parseAllowlistEntry(raw: String): AllowlistEntry? {
         val trimmed = raw.trim()
         if (trimmed.isEmpty()) return null
@@ -393,6 +426,17 @@ class LinkInterceptorActivity : AppCompatActivity() {
         val pattern = parts[0].trim()
         if (pattern.isEmpty()) return null
         val redirectPackage = parts.getOrNull(1)?.trim()?.takeIf { it.isNotEmpty() }
+        return AllowlistEntry(pattern, redirectPackage)
+    }
+
+    private fun parseRedirectRuleEntry(raw: String): AllowlistEntry? {
+        val trimmed = raw.trim()
+        if (trimmed.isEmpty()) return null
+        val parts = trimmed.split(REDIRECT_DELIMITER, limit = 2)
+        if (parts.size < 2) return null
+        val pattern = parts[0].trim()
+        val redirectPackage = parts[1].trim()
+        if (pattern.isEmpty() || redirectPackage.isEmpty()) return null
         return AllowlistEntry(pattern, redirectPackage)
     }
 

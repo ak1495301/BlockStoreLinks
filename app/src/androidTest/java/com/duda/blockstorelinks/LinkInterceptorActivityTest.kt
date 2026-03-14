@@ -90,6 +90,26 @@ class LinkInterceptorActivityTest {
     }
 
     @Test
+    fun redirectRule_overridesAllowlistBlock() {
+        store.setAllowlist("com.example.app", listOf("allowed.com"))
+        store.setRedirectRules("com.example.app", listOf("example.com => com.example.browser"))
+
+        val intent = interceptorIntent("com.example.app", "https://example.com")
+
+        Intents.intending(hasPackage("com.example.browser"))
+            .respondWith(Instrumentation.ActivityResult(Activity.RESULT_OK, Intent()))
+
+        ActivityScenario.launch<LinkInterceptorActivity>(intent).use {
+            Intents.intended(
+                allOf(
+                    hasAction(Intent.ACTION_VIEW),
+                    hasPackage("com.example.browser")
+                )
+            )
+        }
+    }
+
+    @Test
     fun defaultPolicy_opensInAppBrowser() {
         val intent = interceptorIntent("com.example.app")
 

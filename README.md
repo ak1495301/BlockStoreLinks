@@ -14,6 +14,7 @@ A lightweight Android browser that can intercept links from other apps, track at
 - App list includes installed app icons when available.
 - Optional per-app allowlist patterns to restrict which URLs can open, including regex with a `re:` prefix.
 - Allowlist entries can optionally redirect a matching link via `pattern => com.example.browser`.
+- Optional redirect rules let matching links open in a specific app without blocking other URLs.
 - Manual label overrides for app entries (including unknown sources).
 - Add app rules proactively by selecting an installed app or entering a package name.
 - Export or import the full policy list as JSON, including global redirect, link history, and label overrides.
@@ -28,6 +29,7 @@ A lightweight Android browser that can intercept links from other apps, track at
 - Policies determine whether to allow, ask, deny, redirect, or open inside the built-in WebView.
 - Global redirect applies when a per-app redirect is not set.
 - If an allowlist exists for an app, only URLs containing those patterns are allowed. Prefix a pattern with `re:` to treat it as a regular expression. Use `pattern => package` to redirect a matching link.
+- Redirect rules use the same `pattern => package` syntax but do not block non-matching links.
 
 ## Setup
 - Open the project in Android Studio.
@@ -55,6 +57,7 @@ A lightweight Android browser that can intercept links from other apps, track at
 - Minimum SDK is set to 19 for broad compatibility.
 - Import merge behavior: attempt counts are added together, and imported action/redirect/allowlist settings override existing ones for that app. Imported link history is appended and capped.
 - Regex allowlist safety limits: max 20 regex patterns per app, max 200 characters per regex.
+- Redirect rules share the same regex safety limits as allowlists.
 - The allowlist editor validates `re:` patterns and will refuse invalid or too-long regex entries.
 - The external browser chooser filters out Block Store Links itself; if no other browsers are installed, it falls back to the built-in WebView.
 - When package visibility blocks resolving a label, the package name is shown instead of an unknown label.

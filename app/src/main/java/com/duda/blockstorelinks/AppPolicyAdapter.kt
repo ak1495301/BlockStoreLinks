@@ -18,6 +18,7 @@ class AppPolicyAdapter(
     private val onSelectAction: (AppPolicy, LinkAction) -> Unit,
     private val onPickRedirect: (AppPolicy) -> Unit,
     private val onEditAllowlist: (AppPolicy) -> Unit,
+    private val onEditRedirectRules: (AppPolicy) -> Unit,
     private val onResetAttempts: (AppPolicy) -> Unit,
     private val onShowHistory: (AppPolicy) -> Unit,
     private val resolveRedirectLabel: (AppPolicy) -> String
@@ -58,6 +59,8 @@ class AppPolicyAdapter(
         private val redirectTarget: TextView = itemView.findViewById(R.id.redirectTarget)
         private val allowlistButton: Button = itemView.findViewById(R.id.allowlistButton)
         private val allowlistCount: TextView = itemView.findViewById(R.id.allowlistCount)
+        private val redirectRulesButton: Button = itemView.findViewById(R.id.redirectRulesButton)
+        private val redirectRulesCount: TextView = itemView.findViewById(R.id.redirectRulesCount)
         private val resetAttempts: Button = itemView.findViewById(R.id.resetAttempts)
 
         fun bind(policy: AppPolicy) {
@@ -86,6 +89,14 @@ class AppPolicyAdapter(
             )
             allowlistButton.setOnClickListener {
                 onEditAllowlist(policy)
+            }
+
+            redirectRulesCount.text = context.getString(
+                R.string.redirect_rules_count_value,
+                policy.redirectRules.size
+            )
+            redirectRulesButton.setOnClickListener {
+                onEditRedirectRules(policy)
             }
             resetAttempts.setOnClickListener {
                 onResetAttempts(policy)

@@ -62,6 +62,9 @@ class MainActivity : AppCompatActivity() {
             onEditAllowlist = { policy ->
                 showAllowlistEditor(policy)
             },
+            onEditRedirectRules = { policy ->
+                showRedirectRulesEditor(policy)
+            },
             onResetAttempts = { policy ->
                 store.resetAttempts(policy.packageName)
                 refreshList()
@@ -320,6 +323,7 @@ class MainActivity : AppCompatActivity() {
             .setTitle(getString(R.string.allowlist))
             .setView(input)
             .setPositiveButton(android.R.string.ok, null)
+            .setNeutralButton(getString(R.string.allowlist_add_redirect), null)
             .setNegativeButton(android.R.string.cancel, null)
             .create()
 
@@ -338,6 +342,59 @@ class MainActivity : AppCompatActivity() {
                 store.setAllowlist(policy.packageName, patterns)
                 refreshList()
                 dialog.dismiss()
+            }
+            val addRedirect = dialog.getButton(AlertDialog.BUTTON_NEUTRAL)
+            addRedirect.setOnClickListener {
+                showPatternRedirectDialog(getString(R.string.allowlist_add_redirect_title)) { entry ->
+                    val existing = input.text.toString().trim()
+                    val updated = if (existing.isEmpty()) entry else "$existing\n$entry"
+                    input.setText(updated)
+                    input.setSelection(updated.length)
+                }
+            }
+        }
+        dialog.show()
+    }
+
+    private fun showRedirectRulesEditor(policy: AppPolicy) {
+        val input = EditText(this).apply {
+            hint = getString(R.string.redirect_rules_hint)
+            setText(policy.redirectRules.joinToString(separator = "\n"))
+            minLines = 4
+        }
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(getString(R.string.redirect_rules))
+            .setView(input)
+            .setPositiveButton(android.R.string.ok, null)
+            .setNeutralButton(getString(R.string.redirect_rules_add), null)
+            .setNegativeButton(android.R.string.cancel, null)
+            .create()
+
+        dialog.setOnShowListener {
+            val button = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            button.setOnClickListener {
+                val patterns = input.text.toString()
+                    .split("\n")
+                    .map { it.trim() }
+                    .filter { it.isNotEmpty() }
+                val error = validateRedirectRules(patterns)
+                if (error != null) {
+                    Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                store.setRedirectRules(policy.packageName, patterns)
+                refreshList()
+                dialog.dismiss()
+            }
+            val addRedirect = dialog.getButton(AlertDialog.BUTTON_NEUTRAL)
+            addRedirect.setOnClickListener {
+                showPatternRedirectDialog(getString(R.string.redirect_rules_add_title)) { entry ->
+                    val existing = input.text.toString().trim()
+                    val updated = if (existing.isEmpty()) entry else "$existing\n$entry"
+                    input.setText(updated)
+                    input.setSelection(updated.length)
+                }
             }
         }
         dialog.show()
@@ -447,6 +504,43 @@ class MainActivity : AppCompatActivity() {
         return null
     }
 
+    private fun validateRedirectRules(patterns: List<String>): String? {
+        var regexCount = 0
+        patterns.forEachIndexed { index, raw ->
+            val entry = parseRedirectRuleEntry(raw)
+                ?: return getString(R.string.redirect_rules_error_format, index + 1)
+            if (!isValidPackage(entry.redirectPackage)) {
+                return getString(R.string.redirect_rules_error_package, index + 1)
+            }
+            val value = entry.pattern
+            if (value.startsWith(REGEX_PREFIX)) {
+                regexCount += 1
+                if (regexCount > MAX_REGEX_PATTERNS) {
+                    return resources.getQuantityString(
+                        R.plurals.allowlist_error_max_regex,
+                        MAX_REGEX_PATTERNS,
+                        MAX_REGEX_PATTERNS
+                    )
+                }
+                val body = value.removePrefix(REGEX_PREFIX)
+                if (body.length > MAX_REGEX_LENGTH) {
+                    return resources.getQuantityString(
+                        R.plurals.allowlist_error_regex_length,
+                        MAX_REGEX_LENGTH,
+                        index + 1,
+                        MAX_REGEX_LENGTH
+                    )
+                }
+                try {
+                    Pattern.compile(body)
+                } catch (ex: PatternSyntaxException) {
+                    return getString(R.string.allowlist_error_regex_invalid, index + 1)
+                }
+            }
+        }
+        return null
+    }
+
     private fun parseAllowlistEntry(raw: String): AllowlistEntry? {
         val trimmed = raw.trim()
         if (trimmed.isEmpty()) return null
@@ -455,6 +549,118 @@ class MainActivity : AppCompatActivity() {
         if (pattern.isEmpty()) return null
         val redirectPackage = parts.getOrNull(1)?.trim()?.takeIf { it.isNotEmpty() }
         return AllowlistEntry(pattern, redirectPackage)
+    }
+
+    private fun parseRedirectRuleEntry(raw: String): AllowlistEntry? {
+        val trimmed = raw.trim()
+        if (trimmed.isEmpty()) return null
+        val parts = trimmed.split(REDIRECT_DELIMITER, limit = 2)
+        if (parts.size < 2) return null
+        val pattern = parts[0].trim()
+        val redirectPackage = parts[1].trim()
+        if (pattern.isEmpty() || redirectPackage.isEmpty()) return null
+        return AllowlistEntry(pattern, redirectPackage)
+    }
+
+    private fun showPatternRedirectDialog(title: String, onAdd: (String) -> Unit) {
+        val patternInput = EditText(this).apply {
+            hint = getString(R.string.redirect_rules_pattern_hint)
+            inputType = InputType.TYPE_CLASS_TEXT
+        }
+        val selectedLabel = TextView(this).apply {
+            text = getString(R.string.redirect_rules_pick_placeholder)
+        }
+        var selectedPackage: String? = null
+        val pickButton = MaterialButton(this).apply {
+            text = getString(R.string.redirect_rules_pick_app)
+            setOnClickListener {
+                showRedirectPackagePicker { picked ->
+                    if (picked.isNullOrBlank()) return@showRedirectPackagePicker
+                    selectedPackage = picked
+                    selectedLabel.text = picked
+                }
+            }
+        }
+
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            addView(pickButton, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        }
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            val padding = (16 * resources.displayMetrics.density).toInt()
+            setPadding(padding, padding, padding, padding)
+            addView(patternInput)
+            addView(selectedLabel)
+            addView(row)
+        }
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(title)
+            .setView(content)
+            .setPositiveButton(getString(R.string.redirect_rules_add), null)
+            .setNegativeButton(android.R.string.cancel, null)
+            .create()
+
+        dialog.setOnShowListener {
+            val addButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            addButton.setOnClickListener {
+                val pattern = patternInput.text.toString().trim()
+                val target = selectedPackage?.trim().orEmpty()
+                when {
+                    pattern.isEmpty() -> Toast.makeText(
+                        this,
+                        getString(R.string.redirect_rules_error_missing_pattern),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    target.isEmpty() -> Toast.makeText(
+                        this,
+                        getString(R.string.redirect_rules_error_missing_package),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    !isValidPackage(target) -> Toast.makeText(
+                        this,
+                        getString(R.string.redirect_rules_error_package_generic),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    else -> {
+                        onAdd("$pattern $REDIRECT_DELIMITER $target")
+                        dialog.dismiss()
+                    }
+                }
+            }
+        }
+        dialog.show()
+    }
+
+    private fun showRedirectPackagePicker(onSelected: (String?) -> Unit) {
+        val browsers = getBrowserTargets()
+        val labels = mutableListOf<String>()
+        val packages = mutableListOf<String?>()
+
+        browsers.forEach { info ->
+            labels.add(info.loadLabel(packageManager).toString())
+            packages.add(info.activityInfo.packageName)
+        }
+
+        labels.add(getString(R.string.enter_package))
+        packages.add(MANUAL_ENTRY)
+
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.redirect_rules_pick_title))
+            .setItems(labels.toTypedArray()) { _, which ->
+                val selectedPackage = packages[which]
+                if (selectedPackage == MANUAL_ENTRY) {
+                    showPackageEntryDialog(
+                        title = getString(R.string.enter_package_title),
+                        initialValue = null,
+                        onConfirmed = onSelected
+                    )
+                } else {
+                    onSelected(selectedPackage)
+                }
+            }
+            .show()
     }
 
     private fun isValidPackage(value: String): Boolean {

@@ -36,7 +36,23 @@
     <string name="allowlist_hint">One pattern per line. Optional: pattern =&gt; package</string>
     <string name="allowlist_count">Allowlist entries</string>
     <string name="allowlist_count_value">Allowlist entries: %1$d</string>
+    <string name="allowlist_add_redirect">Add redirect</string>
+    <string name="allowlist_add_redirect_title">Add allowlist redirect</string>
     <string name="allowlist_blocked_message">This link does not match the allowlist for this app.</string>
+    <string name="redirect_rules">Redirect rules</string>
+    <string name="redirect_rules_hint">One pattern per line. Format: pattern =&gt; package</string>
+    <string name="redirect_rules_count_value">Redirect rules: %1$d</string>
+    <string name="redirect_rules_add">Add rule</string>
+    <string name="redirect_rules_add_title">Add redirect rule</string>
+    <string name="redirect_rules_pattern_hint">Pattern (use re: for regex)</string>
+    <string name="redirect_rules_pick_app">Pick app</string>
+    <string name="redirect_rules_pick_title">Select redirect app</string>
+    <string name="redirect_rules_pick_placeholder">No app selected</string>
+    <string name="redirect_rules_error_missing_pattern">Pattern is required</string>
+    <string name="redirect_rules_error_missing_package">Redirect app is required</string>
+    <string name="redirect_rules_error_package">Redirect rule error: invalid package on line %1$d</string>
+    <string name="redirect_rules_error_format">Redirect rule error: invalid format on line %1$d</string>
+    <string name="redirect_rules_error_package_generic">Invalid package name</string>
     <string name="export_policies">Export policies</string>
     <string name="import_policies">Import policies</string>
     <string name="import_hint">Paste exported JSON here</string>

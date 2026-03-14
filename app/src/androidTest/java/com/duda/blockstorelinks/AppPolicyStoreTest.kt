@@ -41,6 +41,7 @@ class AppPolicyStoreTest {
         store.setLinkAction("com.example.app", LinkAction.DENY)
         store.setRedirect("com.example.app", "com.example.browser")
         store.setAllowlist("com.example.app", listOf("example.com", "re:^https://"))
+        store.setRedirectRules("com.example.app", listOf("re:^https://example.com => com.example.browser"))
         store.setGlobalRedirect("com.global.browser")
 
         val exported = store.exportPoliciesJson()
@@ -57,6 +58,7 @@ class AppPolicyStoreTest {
         assertEquals(LinkAction.DENY, policy?.linkAction)
         assertEquals("com.example.browser", policy?.redirectPackage)
         assertEquals(2, policy?.allowlistPatterns?.size)
+        assertEquals(1, policy?.redirectRules?.size)
         assertEquals("com.global.browser", store.getGlobalRedirect())
         val history = store.getAttemptHistory("com.example.app")
         assertEquals(1, history.size)
@@ -74,6 +76,7 @@ class AppPolicyStoreTest {
         obj.put("linkAction", "DENY")
         obj.put("redirectPackage", "com.example.browser")
         obj.put("allowlist", JSONArray(listOf("example.com")))
+        obj.put("redirectRules", JSONArray(listOf("example.org => com.example.browser")))
         array.put(obj)
 
         val payload = JSONObject()
@@ -86,6 +89,7 @@ class AppPolicyStoreTest {
         assertEquals(LinkAction.DENY, policy?.linkAction)
         assertEquals("com.example.browser", policy?.redirectPackage)
         assertEquals(1, policy?.allowlistPatterns?.size)
+        assertEquals(1, policy?.redirectRules?.size)
         assertEquals("com.global.browser", store.getGlobalRedirect())
     }
 

@@ -5,5 +5,6 @@ data class AppPolicy(
     var attemptCount: Int,
     var linkAction: LinkAction,
     var redirectPackage: String?,
-    var allowlistPatterns: List<String>
+    var allowlistPatterns: List<String>,
+    var redirectRules: List<String>
 )

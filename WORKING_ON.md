@@ -9,3 +9,5 @@
 - Added manual label overrides for app entries.
 - Added app icons to the policy list and fallback to package names when labels cannot be resolved.
 - Added an "Add app rule" picker to create rules from installed apps or manual package names.
+- Added redirect-only rules to route matching links without blocking other URLs.
+- Added allowlist and redirect rule helpers with app pickers for redirect targets.
