@@ -31,7 +31,6 @@ class BlockedActivity : AppCompatActivity() {
         val uri = Uri.parse(url)
         val baseIntent = Intent(Intent.ACTION_VIEW, uri).apply {
             addCategory(Intent.CATEGORY_BROWSABLE)
-            addCategory(Intent.CATEGORY_DEFAULT)
         }
         val choices = packageManager.queryIntentActivities(baseIntent, 0)
             .filter { it.activityInfo.packageName != packageName }
@@ -59,7 +58,6 @@ class BlockedActivity : AppCompatActivity() {
         return Intent(Intent.ACTION_VIEW, uri).apply {
             setPackage(info.activityInfo.packageName)
             addCategory(Intent.CATEGORY_BROWSABLE)
-            addCategory(Intent.CATEGORY_DEFAULT)
         }
     }
 

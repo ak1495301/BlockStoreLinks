@@ -456,7 +456,6 @@ class MainActivity : AppCompatActivity() {
     private fun getBrowserTargets(): List<ResolveInfo> {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://example.com")).apply {
             addCategory(Intent.CATEGORY_BROWSABLE)
-            addCategory(Intent.CATEGORY_DEFAULT)
         }
         val resolved = packageManager.queryIntentActivities(intent, 0)
             .filter { it.activityInfo.packageName != packageName }
