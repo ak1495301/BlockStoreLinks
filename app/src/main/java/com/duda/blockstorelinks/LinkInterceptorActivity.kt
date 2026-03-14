@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.provider.Browser
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -256,6 +257,14 @@ class LinkInterceptorActivity : AppCompatActivity() {
         if (!referrerName.isNullOrBlank()) {
             extractPackageFromReferrerName(referrerName)?.let { return it }
         }
+        val browserAppId = intent.getStringExtra(Browser.EXTRA_APPLICATION_ID)
+        if (!browserAppId.isNullOrBlank()) {
+            extractPackageFromReferrerName(browserAppId)?.let { return it }
+        }
+        val extraPackageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME)
+        if (!extraPackageName.isNullOrBlank()) {
+            extractPackageFromReferrerName(extraPackageName)?.let { return it }
+        }
         val packageName = intent.`package`
         if (!packageName.isNullOrBlank()) {
             return packageName
@@ -330,6 +339,14 @@ class LinkInterceptorActivity : AppCompatActivity() {
         val referrerName = intent.getStringExtra(EXTRA_REFERRER_NAME)
         if (!referrerName.isNullOrBlank()) {
             parts.add("referrer_name=$referrerName")
+        }
+        val browserAppId = intent.getStringExtra(Browser.EXTRA_APPLICATION_ID)
+        if (!browserAppId.isNullOrBlank()) {
+            parts.add("browser_app_id=$browserAppId")
+        }
+        val extraPackageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME)
+        if (!extraPackageName.isNullOrBlank()) {
+            parts.add("extra_package=$extraPackageName")
         }
         val intentPackage = intent.`package`
         if (!intentPackage.isNullOrBlank()) {

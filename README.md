@@ -22,7 +22,7 @@ A lightweight Android browser that can intercept links from other apps, track at
 ## How It Works
 - `LinkInterceptorActivity` receives browser intents and attributes the source app via the referrer when available (with best-effort parsing when only a referrer string is provided).
 - Attempts and per-app link history are stored in `SharedPreferences` as JSON.
-- The app stores a short hint from the intent (action, categories, referrer fields, package, and extra keys).
+- The app stores a short hint from the intent (action, categories, referrer fields, browser app id, package, and extra keys).
 - Policies determine whether to allow, ask, deny, redirect, or open inside the built-in WebView.
 - Global redirect applies when a per-app redirect is not set.
 - If an allowlist exists for an app, only URLs containing those patterns are allowed. Prefix a pattern with `re:` to treat it as a regular expression. Use `pattern => package` to redirect a matching link.
@@ -47,7 +47,7 @@ A lightweight Android browser that can intercept links from other apps, track at
 11. Use `Copy policies` to put the JSON on the clipboard.
 
 ## Notes
-- Source app attribution depends on the caller providing referrer data; when it's missing, the app is shown as unknown.
+- Source app attribution depends on the caller providing referrer data or a browser app id/package extra; when it's missing, the app is shown as unknown.
 - Link history is capped at 200 entries per app to keep storage bounded.
 - Package visibility restrictions are handled via `<queries>` in the manifest.
 - Minimum SDK is set to 19 for broad compatibility.
