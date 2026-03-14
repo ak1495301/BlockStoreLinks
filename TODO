@@ -1,4 +1,3 @@
-- Add Gradle wrapper files for reproducible builds
 - Add instrumentation tests for intent interception and policy persistence
 - Add option for per-app allowlist of URL patterns
 - Add export/import of policy list

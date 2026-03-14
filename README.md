@@ -19,6 +19,7 @@ A lightweight Android browser that can intercept links from other apps, track at
 - Open the project in Android Studio.
 - Ensure Android Gradle Plugin 8.2+ and JDK 17 are installed.
 - Sync and run on a device.
+- Optional: run `./gradlew tasks` to validate the wrapper.
 
 ## Usage
 1. Install the app.
