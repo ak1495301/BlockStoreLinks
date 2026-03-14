@@ -66,6 +66,19 @@ class AppPolicyStore(private val context: Context) {
         savePolicies(policies)
     }
 
+    fun resetAttempts(packageName: String) {
+        val policies = getPolicies().toMutableList()
+        val policy = policies.find { it.packageName == packageName } ?: return
+        policy.attemptCount = 0
+        savePolicies(policies)
+    }
+
+    fun resetAllAttempts() {
+        val policies = getPolicies().toMutableList()
+        policies.forEach { it.attemptCount = 0 }
+        savePolicies(policies)
+    }
+
     fun exportPoliciesJson(): String {
         val policies = getPolicies()
         val array = JSONArray()

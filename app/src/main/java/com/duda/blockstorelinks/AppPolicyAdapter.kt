@@ -14,7 +14,8 @@ class AppPolicyAdapter(
     private val context: Context,
     private val onToggleBlocked: (AppPolicy, Boolean) -> Unit,
     private val onPickRedirect: (AppPolicy) -> Unit,
-    private val onEditAllowlist: (AppPolicy) -> Unit
+    private val onEditAllowlist: (AppPolicy) -> Unit,
+    private val onResetAttempts: (AppPolicy) -> Unit
 ) : RecyclerView.Adapter<AppPolicyAdapter.PolicyViewHolder>() {
 
     private val items = mutableListOf<AppPolicy>()
@@ -46,6 +47,7 @@ class AppPolicyAdapter(
         private val redirectTarget: TextView = itemView.findViewById(R.id.redirectTarget)
         private val allowlistButton: Button = itemView.findViewById(R.id.allowlistButton)
         private val allowlistCount: TextView = itemView.findViewById(R.id.allowlistCount)
+        private val resetAttempts: Button = itemView.findViewById(R.id.resetAttempts)
 
         fun bind(policy: AppPolicy) {
             appName.text = resolveAppLabel(policy.packageName)
@@ -66,9 +68,12 @@ class AppPolicyAdapter(
                 onPickRedirect(policy)
             }
 
-            allowlistCount.text = context.getString(R.string.allowlist_count) + \": \" + policy.allowlistPatterns.size
+            allowlistCount.text = context.getString(R.string.allowlist_count) + ": " + policy.allowlistPatterns.size
             allowlistButton.setOnClickListener {
                 onEditAllowlist(policy)
+            }
+            resetAttempts.setOnClickListener {
+                onResetAttempts(policy)
             }
         }
 

@@ -5,3 +5,4 @@
 - Added per-app allowlist patterns to restrict which URLs can open.
 - Added export/import for policy list via JSON sharing.
 - Added a merge option for imports to combine lists.
+- Added reset controls for per-app and global attempt counts.

@@ -49,6 +49,10 @@ class MainActivity : AppCompatActivity() {
             },
             onEditAllowlist = { policy ->
                 showAllowlistEditor(policy)
+            },
+            onResetAttempts = { policy ->
+                store.resetAttempts(policy.packageName)
+                refreshList()
             }
         )
         recyclerView.adapter = adapter
@@ -75,6 +79,7 @@ class MainActivity : AppCompatActivity() {
 
         val exportPolicies = findViewById<MaterialButton>(R.id.exportPolicies)
         val importPolicies = findViewById<MaterialButton>(R.id.importPolicies)
+        val resetAllCounts = findViewById<MaterialButton>(R.id.resetAllCounts)
         exportPolicies.setOnClickListener {
             val json = store.exportPoliciesJson()
             val intent = Intent(Intent.ACTION_SEND).apply {
@@ -85,6 +90,9 @@ class MainActivity : AppCompatActivity() {
         }
         importPolicies.setOnClickListener {
             showImportDialog()
+        }
+        resetAllCounts.setOnClickListener {
+            showResetAllDialog()
         }
 
         refreshList()
@@ -184,6 +192,19 @@ class MainActivity : AppCompatActivity() {
         } catch (ex: Exception) {
             Toast.makeText(this, getString(R.string.import_failed), Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun showResetAllDialog() {
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.reset_confirm_title))
+            .setMessage(getString(R.string.reset_confirm_message))
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                store.resetAllAttempts()
+                refreshList()
+                Toast.makeText(this, getString(R.string.reset_done), Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     private fun getBrowserTargets(): List<ResolveInfo> {

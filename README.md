@@ -11,6 +11,7 @@ A lightweight Android browser that can intercept links from other apps, track at
 - Filter and sort the app list by attempts or name.
 - Optional per-app allowlist patterns to restrict which URLs can open.
 - Export or import the full policy list as JSON.
+- Reset attempt counts per app or for all apps.
 
 ## How It Works
 - `LinkInterceptorActivity` receives browser intents and attributes the source app via the referrer when available.
@@ -31,6 +32,7 @@ A lightweight Android browser that can intercept links from other apps, track at
 4. Toggle `Blocked` for apps you want to prevent from opening links here.
 5. Use `Redirect to` to forward links to a different browser.
 6. Use `Export policies` to share settings or `Import policies` to replace or merge them from JSON.
+7. Use `Reset count` per app or `Reset all counts` to clear attempt tracking.
 
 ## Notes
 - Source app attribution depends on the referrer being provided by the caller.
