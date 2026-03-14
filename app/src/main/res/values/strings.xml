@@ -20,6 +20,8 @@
     <string name="export_policies">Export policies</string>
     <string name="import_policies">Import policies</string>
     <string name="import_hint">Paste exported JSON here</string>
+    <string name="import_preview_count">Apps in import: %1$d</string>
+    <string name="import_preview_invalid">Apps in import: invalid JSON</string>
     <string name="import_failed">Import failed: invalid JSON</string>
     <string name="import_success">Import complete</string>
     <string name="import_merge">Merge</string>

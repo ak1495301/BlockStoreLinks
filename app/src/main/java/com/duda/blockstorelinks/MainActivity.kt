@@ -19,6 +19,8 @@ import android.text.InputType
 import android.widget.Toast
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.widget.LinearLayout
+import android.widget.TextView
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 
@@ -182,15 +184,45 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showImportDialog() {
+        val preview = TextView(this)
         val input = EditText(this).apply {
             hint = getString(R.string.import_hint)
             minLines = 6
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
         }
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            val padding = (16 * resources.displayMetrics.density).toInt()
+            setPadding(padding, padding, padding, padding)
+            val previewParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            val inputParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                topMargin = (8 * resources.displayMetrics.density).toInt()
+            }
+            addView(preview, previewParams)
+            addView(input, inputParams)
+        }
+        val updatePreview = {
+            val raw = input.text.toString().trim()
+            val payload = if (raw.isEmpty()) "[]" else raw
+            try {
+                val count = store.countPoliciesFromJson(payload)
+                preview.text = getString(R.string.import_preview_count, count)
+            } catch (ex: Exception) {
+                preview.text = getString(R.string.import_preview_invalid)
+            }
+        }
+        input.addTextChangedListener { updatePreview() }
+        updatePreview()
 
         AlertDialog.Builder(this)
             .setTitle(getString(R.string.import_policies))
-            .setView(input)
+            .setView(content)
             .setPositiveButton(getString(R.string.import_replace)) { _, _ ->
                 handleImport(input.text.toString(), merge = false)
             }

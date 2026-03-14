@@ -11,6 +11,7 @@ A lightweight Android browser that can intercept links from other apps, track at
 - Filter and sort the app list by attempts or name.
 - Optional per-app allowlist patterns to restrict which URLs can open, including regex with a `re:` prefix.
 - Export or import the full policy list as JSON.
+- Import preview shows how many apps are in the pasted JSON.
 - Copy policy JSON to the clipboard.
 - Reset attempt counts per app or for all apps.
 
@@ -32,7 +33,7 @@ A lightweight Android browser that can intercept links from other apps, track at
 3. Open the app to see the list of attempts.
 4. Toggle `Blocked` for apps you want to prevent from opening links here.
 5. Use `Redirect to` to forward links to a different browser.
-6. Use `Export policies` to share settings or `Import policies` to replace or merge them from JSON.
+6. Use `Export policies` to share settings or `Import policies` to replace or merge them from JSON (preview shows app count).
 7. Use `Reset count` per app or `Reset all counts` to clear attempt tracking.
 8. Use `Copy policies` to put the JSON on the clipboard.
 

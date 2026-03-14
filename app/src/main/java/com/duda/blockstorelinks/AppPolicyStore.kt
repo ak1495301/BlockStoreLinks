@@ -88,6 +88,18 @@ class AppPolicyStore(private val context: Context) {
         return array.toString()
     }
 
+    fun countPoliciesFromJson(raw: String): Int {
+        val array = JSONArray(raw)
+        var count = 0
+        for (i in 0 until array.length()) {
+            val obj = array.optJSONObject(i) ?: continue
+            if (readPolicy(obj) != null) {
+                count += 1
+            }
+        }
+        return count
+    }
+
     fun replacePoliciesFromJson(raw: String): Boolean {
         val array = JSONArray(raw)
         val policies = mutableListOf<AppPolicy>()
