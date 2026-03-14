@@ -7,3 +7,4 @@
 - Added a merge option for imports to combine lists.
 - Added reset controls for per-app and global attempt counts.
 - Added regex allowlist support with safety limits.
+- Added allowlist regex validation feedback in the editor.

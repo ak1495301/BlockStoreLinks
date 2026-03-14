@@ -1,2 +1,1 @@
 - Add instrumentation tests for intent interception and policy persistence
-- Add regex validation UX for allowlist patterns

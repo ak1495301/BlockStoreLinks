@@ -17,6 +17,8 @@ import com.google.android.material.textfield.TextInputEditText
 import android.widget.EditText
 import android.text.InputType
 import android.widget.Toast
+import java.util.regex.Pattern
+import java.util.regex.PatternSyntaxException
 
 class MainActivity : AppCompatActivity() {
     private lateinit var store: AppPolicyStore
@@ -142,19 +144,31 @@ class MainActivity : AppCompatActivity() {
             minLines = 4
         }
 
-        AlertDialog.Builder(this)
+        val dialog = AlertDialog.Builder(this)
             .setTitle(getString(R.string.allowlist))
             .setView(input)
-            .setPositiveButton(android.R.string.ok) { _, _ ->
+            .setPositiveButton(android.R.string.ok, null)
+            .setNegativeButton(android.R.string.cancel, null)
+            .create()
+
+        dialog.setOnShowListener {
+            val button = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            button.setOnClickListener {
                 val patterns = input.text.toString()
                     .split("\n")
                     .map { it.trim() }
                     .filter { it.isNotEmpty() }
+                val error = validateAllowlist(patterns)
+                if (error != null) {
+                    Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
                 store.setAllowlist(policy.packageName, patterns)
                 refreshList()
+                dialog.dismiss()
             }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
+        }
+        dialog.show()
     }
 
     private fun showImportDialog() {
@@ -192,6 +206,29 @@ class MainActivity : AppCompatActivity() {
         } catch (ex: Exception) {
             Toast.makeText(this, getString(R.string.import_failed), Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun validateAllowlist(patterns: List<String>): String? {
+        var regexCount = 0
+        patterns.forEachIndexed { index, raw ->
+            val value = raw.trim()
+            if (value.startsWith(REGEX_PREFIX)) {
+                regexCount += 1
+                if (regexCount > MAX_REGEX_PATTERNS) {
+                    return getString(R.string.allowlist_error_max_regex, MAX_REGEX_PATTERNS)
+                }
+                val body = value.removePrefix(REGEX_PREFIX)
+                if (body.length > MAX_REGEX_LENGTH) {
+                    return getString(R.string.allowlist_error_regex_length, index + 1, MAX_REGEX_LENGTH)
+                }
+                try {
+                    Pattern.compile(body)
+                } catch (ex: PatternSyntaxException) {
+                    return getString(R.string.allowlist_error_regex_invalid, index + 1)
+                }
+            }
+        }
+        return null
     }
 
     private fun showResetAllDialog() {
@@ -234,5 +271,11 @@ class MainActivity : AppCompatActivity() {
     private enum class SortMode {
         ATTEMPTS,
         NAME
+    }
+
+    companion object {
+        private const val REGEX_PREFIX = "re:"
+        private const val MAX_REGEX_LENGTH = 200
+        private const val MAX_REGEX_PATTERNS = 20
     }
 }

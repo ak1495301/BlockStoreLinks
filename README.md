@@ -40,6 +40,7 @@ A lightweight Android browser that can intercept links from other apps, track at
 - Minimum SDK is set to 19 for broad compatibility.
 - Import merge behavior: attempt counts are added together, and imported block/redirect/allowlist settings override existing ones for that app.
 - Regex allowlist safety limits: max 20 regex patterns per app, max 200 characters per regex.
+- The allowlist editor validates `re:` patterns and will refuse invalid or too-long regex entries.
 
 ## Project Structure
 - `app/src/main/java/com/duda/blockstorelinks/LinkInterceptorActivity.kt`
