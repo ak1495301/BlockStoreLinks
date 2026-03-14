@@ -97,43 +97,38 @@ class AppPolicyStore(private val context: Context) {
 
     fun exportPoliciesJson(): String {
         val policies = getPolicies()
+        val payload = JSONObject()
+        payload.put("version", 2)
+        payload.put("globalRedirect", getGlobalRedirect() ?: "")
         val array = JSONArray()
         policies.forEach { policy ->
             array.put(writePolicy(policy))
         }
-        return array.toString()
+        payload.put("policies", array)
+        payload.put("attemptLogs", writeAttemptLogs(readAttemptLogs()))
+        return payload.toString()
     }
 
     fun countPoliciesFromJson(raw: String): Int {
-        val array = JSONArray(raw)
-        var count = 0
-        for (i in 0 until array.length()) {
-            val obj = array.optJSONObject(i) ?: continue
-            if (readPolicy(obj) != null) {
-                count += 1
-            }
-        }
-        return count
+        return parsePayload(raw).policies.size
     }
 
     fun replacePoliciesFromJson(raw: String): Boolean {
-        val array = JSONArray(raw)
-        val policies = mutableListOf<AppPolicy>()
-        for (i in 0 until array.length()) {
-            val obj = array.optJSONObject(i) ?: continue
-            val policy = readPolicy(obj) ?: continue
-            policies.add(policy)
+        val payload = parsePayload(raw)
+        savePolicies(payload.policies)
+        if (payload.hasGlobalRedirect) {
+            setGlobalRedirect(payload.globalRedirect)
         }
-        savePolicies(policies)
+        if (payload.hasLogs) {
+            saveAttemptLogs(payload.attemptLogs)
+        }
         return true
     }
 
     fun mergePoliciesFromJson(raw: String): Boolean {
-        val array = JSONArray(raw)
+        val payload = parsePayload(raw)
         val existing = getPolicies().associateBy { it.packageName }.toMutableMap()
-        for (i in 0 until array.length()) {
-            val obj = array.optJSONObject(i) ?: continue
-            val policy = readPolicy(obj) ?: continue
+        payload.policies.forEach { policy ->
             val current = existing[policy.packageName]
             if (current == null) {
                 existing[policy.packageName] = policy
@@ -145,6 +140,13 @@ class AppPolicyStore(private val context: Context) {
             }
         }
         savePolicies(existing.values.toList())
+        if (payload.hasGlobalRedirect) {
+            setGlobalRedirect(payload.globalRedirect)
+        }
+        if (payload.hasLogs) {
+            val mergedLogs = mergeAttemptLogs(readAttemptLogs(), payload.attemptLogs)
+            saveAttemptLogs(mergedLogs)
+        }
         return true
     }
 
@@ -207,6 +209,41 @@ class AppPolicyStore(private val context: Context) {
         return result
     }
 
+    private fun parsePayload(raw: String): ImportPayload {
+        val trimmed = raw.trim()
+        if (trimmed.startsWith("[")) {
+            val array = JSONArray(trimmed)
+            return ImportPayload(
+                policies = readPoliciesFromArray(array),
+                attemptLogs = emptyMap(),
+                hasLogs = false,
+                globalRedirect = null,
+                hasGlobalRedirect = false
+            )
+        }
+        val obj = JSONObject(trimmed)
+        val policies = readPoliciesFromArray(obj.optJSONArray("policies") ?: JSONArray())
+        val hasLogs = obj.has("attemptLogs")
+        val hasGlobalRedirect = obj.has("globalRedirect")
+        return ImportPayload(
+            policies = policies,
+            attemptLogs = readAttemptLogsFrom(obj.optJSONObject("attemptLogs")),
+            hasLogs = hasLogs,
+            globalRedirect = obj.optString("globalRedirect", "").takeIf { it.isNotBlank() },
+            hasGlobalRedirect = hasGlobalRedirect
+        )
+    }
+
+    private fun readPoliciesFromArray(array: JSONArray): List<AppPolicy> {
+        val policies = mutableListOf<AppPolicy>()
+        for (i in 0 until array.length()) {
+            val obj = array.optJSONObject(i) ?: continue
+            val policy = readPolicy(obj) ?: continue
+            policies.add(policy)
+        }
+        return policies
+    }
+
     private fun recordAttemptLog(
         sourcePackage: String,
         url: String,
@@ -227,7 +264,11 @@ class AppPolicyStore(private val context: Context) {
 
     private fun readAttemptLogs(): MutableMap<String, List<LinkAttempt>> {
         val raw = prefs.getString(KEY_ATTEMPT_LOGS, null) ?: return mutableMapOf()
-        val root = JSONObject(raw)
+        return readAttemptLogsFrom(JSONObject(raw)).toMutableMap()
+    }
+
+    private fun readAttemptLogsFrom(root: JSONObject?): Map<String, List<LinkAttempt>> {
+        if (root == null) return emptyMap()
         val result = mutableMapOf<String, List<LinkAttempt>>()
         val keys = root.keys()
         while (keys.hasNext()) {
@@ -249,6 +290,11 @@ class AppPolicyStore(private val context: Context) {
     }
 
     private fun saveAttemptLogs(logs: Map<String, List<LinkAttempt>>) {
+        val root = writeAttemptLogs(logs)
+        prefs.edit().putString(KEY_ATTEMPT_LOGS, root.toString()).apply()
+    }
+
+    private fun writeAttemptLogs(logs: Map<String, List<LinkAttempt>>): JSONObject {
         val root = JSONObject()
         logs.forEach { (packageName, entries) ->
             val array = JSONArray()
@@ -261,8 +307,34 @@ class AppPolicyStore(private val context: Context) {
             }
             root.put(packageName, array)
         }
-        prefs.edit().putString(KEY_ATTEMPT_LOGS, root.toString()).apply()
+        return root
     }
+
+    private fun mergeAttemptLogs(
+        existing: Map<String, List<LinkAttempt>>,
+        incoming: Map<String, List<LinkAttempt>>
+    ): Map<String, List<LinkAttempt>> {
+        val merged = existing.toMutableMap()
+        incoming.forEach { (packageName, entries) ->
+            val combined = (merged[packageName].orEmpty() + entries)
+                .sortedBy { it.timestamp }
+            val trimmed = if (combined.size > MAX_HISTORY_PER_APP) {
+                combined.takeLast(MAX_HISTORY_PER_APP)
+            } else {
+                combined
+            }
+            merged[packageName] = trimmed
+        }
+        return merged
+    }
+
+    private data class ImportPayload(
+        val policies: List<AppPolicy>,
+        val attemptLogs: Map<String, List<LinkAttempt>>,
+        val hasLogs: Boolean,
+        val globalRedirect: String?,
+        val hasGlobalRedirect: Boolean
+    )
 
     companion object {
         private const val PREFS_NAME = "block_store_links"

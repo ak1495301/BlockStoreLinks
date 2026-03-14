@@ -4,8 +4,12 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.view.ViewGroup
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.button.MaterialButton
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 
@@ -85,32 +89,122 @@ class LinkInterceptorActivity : AppCompatActivity() {
         redirectPackage: String?
     ) {
         val appLabel = resolveAppLabel(sourcePackage)
-        AlertDialog.Builder(this)
+        val dialog = AlertDialog.Builder(this)
             .setTitle(getString(R.string.ask_title))
-            .setMessage(getString(R.string.ask_message, appLabel, url))
-            .setPositiveButton(getString(R.string.allow_action)) { _, _ ->
-                val link = Uri.parse(url)
-                if (redirectPackage != null && forwardToPackage(link, redirectPackage)) {
-                    store.updateAttemptOutcome(sourcePackage, timestamp, LinkOutcome.REDIRECTED)
-                    finish()
-                    return@setPositiveButton
-                }
-                store.updateAttemptOutcome(sourcePackage, timestamp, LinkOutcome.ALLOWED)
-                val browserIntent = Intent(this, BrowserActivity::class.java).apply {
-                    putExtra(BrowserActivity.EXTRA_URL, url)
-                }
-                startActivity(browserIntent)
-                finish()
+            .create()
+
+        val density = resources.displayMetrics.density
+        val padding = (20 * density).toInt()
+        val spacing = (12 * density).toInt()
+
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(padding, padding, padding, padding)
+        }
+
+        val message = TextView(this).apply {
+            text = getString(R.string.ask_message, appLabel, url)
+        }
+
+        val rowOne = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+        }
+        val rowTwo = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+        }
+
+        val buttonParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        val buttonParamsEnd = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+            marginStart = spacing
+        }
+
+        val allowOnce = MaterialButton(this).apply {
+            text = getString(R.string.allow_action)
+            setOnClickListener {
+                dialog.dismiss()
+                allowLink(sourcePackage, url, timestamp, redirectPackage, null)
             }
-            .setNegativeButton(getString(R.string.deny_action)) { _, _ ->
-                store.updateAttemptOutcome(sourcePackage, timestamp, LinkOutcome.DENIED)
-                showBlocked(url, getString(R.string.denied_message))
+        }
+        val denyOnce = MaterialButton(this).apply {
+            text = getString(R.string.deny_action)
+            setOnClickListener {
+                dialog.dismiss()
+                denyLink(sourcePackage, url, timestamp, null)
             }
-            .setOnCancelListener {
-                store.updateAttemptOutcome(sourcePackage, timestamp, LinkOutcome.DENIED)
-                showBlocked(url, getString(R.string.denied_message))
+        }
+        val allowAlways = MaterialButton(this).apply {
+            text = getString(R.string.always_allow_action)
+            setOnClickListener {
+                dialog.dismiss()
+                allowLink(sourcePackage, url, timestamp, redirectPackage, LinkAction.ALLOW)
             }
-            .show()
+        }
+        val denyAlways = MaterialButton(this).apply {
+            text = getString(R.string.always_deny_action)
+            setOnClickListener {
+                dialog.dismiss()
+                denyLink(sourcePackage, url, timestamp, LinkAction.DENY)
+            }
+        }
+
+        rowOne.addView(allowOnce, buttonParams)
+        rowOne.addView(denyOnce, buttonParamsEnd)
+        rowTwo.addView(allowAlways, buttonParams)
+        rowTwo.addView(denyAlways, buttonParamsEnd)
+
+        val rowTwoParams = LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        ).apply {
+            topMargin = spacing
+        }
+
+        container.addView(message)
+        container.addView(rowOne, rowTwoParams)
+        container.addView(rowTwo, rowTwoParams)
+
+        dialog.setView(container)
+        dialog.setOnCancelListener {
+            denyLink(sourcePackage, url, timestamp, null)
+        }
+        dialog.show()
+    }
+
+    private fun allowLink(
+        sourcePackage: String,
+        url: String,
+        timestamp: Long,
+        redirectPackage: String?,
+        persistAction: LinkAction?
+    ) {
+        if (persistAction != null) {
+            store.setLinkAction(sourcePackage, persistAction)
+        }
+        val link = Uri.parse(url)
+        if (redirectPackage != null && forwardToPackage(link, redirectPackage)) {
+            store.updateAttemptOutcome(sourcePackage, timestamp, LinkOutcome.REDIRECTED)
+            finish()
+            return
+        }
+        store.updateAttemptOutcome(sourcePackage, timestamp, LinkOutcome.ALLOWED)
+        val browserIntent = Intent(this, BrowserActivity::class.java).apply {
+            putExtra(BrowserActivity.EXTRA_URL, url)
+        }
+        startActivity(browserIntent)
+        finish()
+    }
+
+    private fun denyLink(
+        sourcePackage: String,
+        url: String,
+        timestamp: Long,
+        persistAction: LinkAction?
+    ) {
+        if (persistAction != null) {
+            store.setLinkAction(sourcePackage, persistAction)
+        }
+        store.updateAttemptOutcome(sourcePackage, timestamp, LinkOutcome.DENIED)
+        showBlocked(url, getString(R.string.denied_message))
     }
 
     private fun showBlocked(url: String, reason: String) {

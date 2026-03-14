@@ -13,7 +13,7 @@ A lightweight Android browser that can intercept links from other apps, track at
 - Filter and sort the app list by attempts or name.
 - Optional per-app allowlist patterns to restrict which URLs can open, including regex with a `re:` prefix.
 - Allowlist entries can optionally redirect a matching link via `pattern => com.example.browser`.
-- Export or import the full policy list as JSON.
+- Export or import the full policy list as JSON, including global redirect and link history.
 - Import preview shows how many apps are in the pasted JSON.
 - Copy policy JSON to the clipboard.
 - Reset attempt counts per app or for all apps.
@@ -36,19 +36,20 @@ A lightweight Android browser that can intercept links from other apps, track at
 2. Set it as the default browser when Android prompts.
 3. Open the app to see the list of attempts.
 4. Set each app to `Allow`, `Ask`, or `Deny`.
-5. Use `Redirect to` to forward links to a different browser.
-6. Use `Global redirect` to set a default browser when no per-app redirect is set.
-7. Tap an app row to see its link history by timestamp.
-8. Use `Export policies` to share settings or `Import policies` to replace or merge them from JSON (preview shows app count).
-9. Use `Reset count` per app or `Reset all counts` to clear attempt tracking.
-10. Use `Copy policies` to put the JSON on the clipboard.
+5. When asked, choose allow/deny once or set an always allow/deny rule.
+6. Use `Redirect to` to forward links to a different browser.
+7. Use `Global redirect` to set a default browser when no per-app redirect is set.
+8. Tap an app row to see its link history by timestamp.
+9. Use `Export policies` to share settings or `Import policies` to replace or merge them from JSON (preview shows app count).
+10. Use `Reset count` per app or `Reset all counts` to clear attempt tracking.
+11. Use `Copy policies` to put the JSON on the clipboard.
 
 ## Notes
 - Source app attribution depends on the referrer being provided by the caller.
 - Link history is capped at 200 entries per app to keep storage bounded.
 - Package visibility restrictions are handled via `<queries>` in the manifest.
 - Minimum SDK is set to 19 for broad compatibility.
-- Import merge behavior: attempt counts are added together, and imported action/redirect/allowlist settings override existing ones for that app.
+- Import merge behavior: attempt counts are added together, and imported action/redirect/allowlist settings override existing ones for that app. Imported link history is appended and capped.
 - Regex allowlist safety limits: max 20 regex patterns per app, max 200 characters per regex.
 - The allowlist editor validates `re:` patterns and will refuse invalid or too-long regex entries.
 

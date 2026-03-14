@@ -14,6 +14,8 @@
     <string name="action_deny">Deny</string>
     <string name="allow_action">Allow</string>
     <string name="deny_action">Deny</string>
+    <string name="always_allow_action">Always allow</string>
+    <string name="always_deny_action">Always deny</string>
     <string name="attempts">Attempts</string>
     <string name="attempts_count">Attempts: %1$d</string>
     <string name="unknown_app">Unknown app</string>

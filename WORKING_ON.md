@@ -1,5 +1,6 @@
-- Added per-app action mode (allow, ask, deny) in the main list.
+- Added per-app action mode (allow, ask, deny) plus always-allow/deny options in the ask dialog.
 - Added global redirect selection with manual package entry support.
 - Added per-app link history storage with timestamped entries and a history dialog.
 - Added allowlist support for per-link redirects via `pattern => package`.
+- Export/import now includes global redirect and link history alongside policies.
 - Improved browser pickers and fallback referrer handling.
