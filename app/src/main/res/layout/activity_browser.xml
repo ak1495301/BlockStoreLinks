@@ -8,8 +8,8 @@
         android:id="@+id/browserToolbar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:backgroundTint="@color/purple_500"
-        android:titleTextColor="@color/white"
+        android:background="@color/purple_500"
+        app:titleTextColor="@color/white"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />

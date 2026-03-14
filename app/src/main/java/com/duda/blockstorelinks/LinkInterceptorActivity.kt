@@ -80,7 +80,7 @@ class LinkInterceptorActivity : AppCompatActivity() {
         if (referrer != null && referrer.scheme == "android-app") {
             return referrer.host
         }
-        val referrerName = intent.getStringExtra(Intent.EXTRA_REFERRER_NAME)
+        val referrerName = intent.getStringExtra(EXTRA_REFERRER_NAME)
         if (referrerName != null && referrerName.startsWith("android-app://")) {
             return Uri.parse(referrerName).host
         }
@@ -119,6 +119,7 @@ class LinkInterceptorActivity : AppCompatActivity() {
     }
 
     companion object {
+        private const val EXTRA_REFERRER_NAME = "android.intent.extra.REFERRER_NAME"
         private const val REGEX_PREFIX = "re:"
         private const val MAX_REGEX_LENGTH = 200
         private const val MAX_REGEX_PATTERNS = 20

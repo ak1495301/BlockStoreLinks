@@ -7,6 +7,7 @@
     <string name="redirect_to">Redirect to</string>
     <string name="blocked_toggle">Blocked</string>
     <string name="attempts">Attempts</string>
+    <string name="attempts_count">Attempts: %1$d</string>
     <string name="unknown_app">Unknown app</string>
     <string name="pick_browser">Pick a browser</string>
     <string name="clear_redirect">Clear redirect</string>
@@ -16,6 +17,7 @@
     <string name="allowlist">Allowed URLs</string>
     <string name="allowlist_hint">One pattern per line</string>
     <string name="allowlist_count">Allowlist entries</string>
+    <string name="allowlist_count_value">Allowlist entries: %1$d</string>
     <string name="allowlist_blocked_message">This link does not match the allowlist for this app.</string>
     <string name="export_policies">Export policies</string>
     <string name="import_policies">Import policies</string>
@@ -35,6 +37,12 @@
     <string name="reset_confirm_message">This will clear attempt counts for every app.</string>
     <string name="reset_done">Counts reset</string>
     <string name="allowlist_error_regex_invalid">Allowlist error: invalid regex on line %1$d</string>
-    <string name="allowlist_error_regex_length">Allowlist error: regex on line %1$d exceeds %2$d chars</string>
-    <string name="allowlist_error_max_regex">Allowlist error: max %1$d regex patterns</string>
+    <plurals name="allowlist_error_regex_length">
+        <item quantity="one">Allowlist error: regex on line %1$d exceeds %2$d char</item>
+        <item quantity="other">Allowlist error: regex on line %1$d exceeds %2$d chars</item>
+    </plurals>
+    <plurals name="allowlist_error_max_regex">
+        <item quantity="one">Allowlist error: max %1$d regex pattern</item>
+        <item quantity="other">Allowlist error: max %1$d regex patterns</item>
+    </plurals>
 </resources>

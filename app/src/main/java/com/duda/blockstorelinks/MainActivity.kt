@@ -257,11 +257,20 @@ class MainActivity : AppCompatActivity() {
             if (value.startsWith(REGEX_PREFIX)) {
                 regexCount += 1
                 if (regexCount > MAX_REGEX_PATTERNS) {
-                    return getString(R.string.allowlist_error_max_regex, MAX_REGEX_PATTERNS)
+                    return resources.getQuantityString(
+                        R.plurals.allowlist_error_max_regex,
+                        MAX_REGEX_PATTERNS,
+                        MAX_REGEX_PATTERNS
+                    )
                 }
                 val body = value.removePrefix(REGEX_PREFIX)
                 if (body.length > MAX_REGEX_LENGTH) {
-                    return getString(R.string.allowlist_error_regex_length, index + 1, MAX_REGEX_LENGTH)
+                    return resources.getQuantityString(
+                        R.plurals.allowlist_error_regex_length,
+                        MAX_REGEX_LENGTH,
+                        index + 1,
+                        MAX_REGEX_LENGTH
+                    )
                 }
                 try {
                     Pattern.compile(body)

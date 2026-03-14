@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.switchmaterial.SwitchMaterial
 
@@ -21,9 +22,10 @@ class AppPolicyAdapter(
     private val items = mutableListOf<AppPolicy>()
 
     fun submitList(policies: List<AppPolicy>) {
+        val diffResult = DiffUtil.calculateDiff(AppPolicyDiff(items, policies))
         items.clear()
         items.addAll(policies)
-        notifyDataSetChanged()
+        diffResult.dispatchUpdatesTo(this)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PolicyViewHolder {
@@ -52,7 +54,7 @@ class AppPolicyAdapter(
         fun bind(policy: AppPolicy) {
             appName.text = resolveAppLabel(policy.packageName)
             appPackage.text = policy.packageName
-            attempts.text = context.getString(R.string.attempts) + ": " + policy.attemptCount
+            attempts.text = context.getString(R.string.attempts_count, policy.attemptCount)
 
             blockedSwitch.setOnCheckedChangeListener(null)
             blockedSwitch.isChecked = policy.blocked
@@ -68,7 +70,10 @@ class AppPolicyAdapter(
                 onPickRedirect(policy)
             }
 
-            allowlistCount.text = context.getString(R.string.allowlist_count) + ": " + policy.allowlistPatterns.size
+            allowlistCount.text = context.getString(
+                R.string.allowlist_count_value,
+                policy.allowlistPatterns.size
+            )
             allowlistButton.setOnClickListener {
                 onEditAllowlist(policy)
             }
@@ -84,6 +89,23 @@ class AppPolicyAdapter(
             } catch (ex: PackageManager.NameNotFoundException) {
                 context.getString(R.string.unknown_app)
             }
+        }
+    }
+
+    private class AppPolicyDiff(
+        private val oldItems: List<AppPolicy>,
+        private val newItems: List<AppPolicy>
+    ) : DiffUtil.Callback() {
+        override fun getOldListSize(): Int = oldItems.size
+
+        override fun getNewListSize(): Int = newItems.size
+
+        override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            return oldItems[oldItemPosition].packageName == newItems[newItemPosition].packageName
+        }
+
+        override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            return oldItems[oldItemPosition] == newItems[newItemPosition]
         }
     }
 }

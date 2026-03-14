@@ -1,5 +1,6 @@
 package com.duda.blockstorelinks
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.View
 import android.webkit.WebChromeClient
@@ -14,6 +15,7 @@ class BrowserActivity : AppCompatActivity() {
     private lateinit var toolbar: MaterialToolbar
     private lateinit var progress: View
 
+    @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_browser)
