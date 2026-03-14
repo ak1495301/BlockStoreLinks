@@ -8,6 +8,7 @@ import android.provider.Browser
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
@@ -57,14 +58,14 @@ class LinkInterceptorActivity : AppCompatActivity() {
                 LinkOutcome.ALLOWLIST_BLOCKED,
                 sourceHint
             )
-            showBlocked(link.toString(), getString(R.string.allowlist_blocked_message))
+            showBlockedToast(getString(R.string.allowlist_blocked_message))
             return
         }
 
         when (action) {
             LinkAction.DENY -> {
                 store.recordAttempt(sourcePackage, link.toString(), timestamp, LinkOutcome.DENIED, sourceHint)
-                showBlocked(link.toString(), getString(R.string.denied_message))
+                showBlockedToast(getString(R.string.denied_message))
             }
             LinkAction.ASK -> {
                 store.recordAttempt(sourcePackage, link.toString(), timestamp, LinkOutcome.ASKED, sourceHint)
@@ -226,16 +227,7 @@ class LinkInterceptorActivity : AppCompatActivity() {
             store.setLinkAction(sourcePackage, persistAction)
         }
         store.updateAttemptOutcome(sourcePackage, timestamp, LinkOutcome.DENIED)
-        showBlocked(url, getString(R.string.denied_message))
-    }
-
-    private fun showBlocked(url: String, reason: String) {
-        val blockedIntent = Intent(this, BlockedActivity::class.java).apply {
-            putExtra(BlockedActivity.EXTRA_URL, url)
-            putExtra(BlockedActivity.EXTRA_REASON, reason)
-        }
-        startActivity(blockedIntent)
-        finish()
+        showBlockedToast(getString(R.string.denied_message))
     }
 
     private fun forwardToPackage(uri: Uri, targetPackage: String): Boolean {
@@ -249,6 +241,11 @@ class LinkInterceptorActivity : AppCompatActivity() {
         } catch (ex: ActivityNotFoundException) {
             false
         }
+    }
+
+    private fun showBlockedToast(reason: String) {
+        Toast.makeText(this, reason, Toast.LENGTH_SHORT).show()
+        finish()
     }
 
     private fun resolveSourcePackage(intent: Intent): String? {

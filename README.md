@@ -59,6 +59,7 @@ A lightweight Android browser that can intercept links from other apps, track at
 - Regex allowlist safety limits: max 20 regex patterns per app, max 200 characters per regex.
 - Redirect rules share the same regex safety limits as allowlists.
 - The allowlist editor validates `re:` patterns and will refuse invalid or too-long regex entries.
+- Blocked links close immediately with a short toast (no blocked screen).
 - The external browser chooser filters out Block Store Links itself; if no other browsers are installed, it falls back to the built-in WebView.
 - When package visibility blocks resolving a label, the package name is shown instead of an unknown label.
 - Label overrides are included in export/import.

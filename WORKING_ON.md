@@ -11,3 +11,4 @@
 - Added an "Add app rule" picker to create rules from installed apps or manual package names.
 - Added redirect-only rules to route matching links without blocking other URLs.
 - Added allowlist and redirect rule helpers with app pickers for redirect targets.
+- Blocked links now close immediately with a toast instead of showing a blocked screen.
