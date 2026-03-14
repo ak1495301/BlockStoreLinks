@@ -10,4 +10,7 @@
     <string name="unknown_app">Unknown app</string>
     <string name="pick_browser">Pick a browser</string>
     <string name="clear_redirect">Clear redirect</string>
+    <string name="filter_apps">Filter apps</string>
+    <string name="sort_attempts">Sort: Attempts</string>
+    <string name="sort_name">Sort: Name</string>
 </resources>

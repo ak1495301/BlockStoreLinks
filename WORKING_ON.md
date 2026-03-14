@@ -1,3 +1,3 @@
 - Implemented core intent interception, per-app attempt tracking, block toggles, and redirect rules.
 - Added a basic in-app WebView browser for allowed links and a blocked notice screen.
-- Added app list UI for managing per-app policies.
+- Added app list UI for managing per-app policies plus filter/sort controls.
