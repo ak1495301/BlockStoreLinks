@@ -10,4 +10,5 @@
 - Added allowlist regex validation feedback in the editor.
 - Added a copy-to-clipboard button for policy export.
 - Added instrumentation tests for policy persistence.
+- Added instrumentation tests for link interception flows.
 - Added an import preview that counts apps in pasted JSON.
