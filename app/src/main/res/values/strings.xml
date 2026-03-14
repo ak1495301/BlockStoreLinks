@@ -95,6 +95,7 @@
     <string name="outcome_allowlist_blocked">Allowlist blocked</string>
     <string name="ask_title">Allow this link?</string>
     <string name="ask_message">%1$s wants to open:\n%2$s</string>
+    <string name="blocked_toast">%1$s %2$s</string>
     <string name="allowlist_error_empty_pattern">Allowlist error: empty pattern on line %1$d</string>
     <string name="allowlist_error_package">Allowlist error: invalid package on line %1$d</string>
     <string name="allowlist_error_regex_invalid">Allowlist error: invalid regex on line %1$d</string>

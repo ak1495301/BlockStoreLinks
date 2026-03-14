@@ -58,14 +58,14 @@ class LinkInterceptorActivity : AppCompatActivity() {
                 LinkOutcome.ALLOWLIST_BLOCKED,
                 sourceHint
             )
-            showBlockedToast(getString(R.string.allowlist_blocked_message))
+            showBlockedToast(link.toString(), getString(R.string.allowlist_blocked_message))
             return
         }
 
         when (action) {
             LinkAction.DENY -> {
                 store.recordAttempt(sourcePackage, link.toString(), timestamp, LinkOutcome.DENIED, sourceHint)
-                showBlockedToast(getString(R.string.denied_message))
+                showBlockedToast(link.toString(), getString(R.string.denied_message))
             }
             LinkAction.ASK -> {
                 store.recordAttempt(sourcePackage, link.toString(), timestamp, LinkOutcome.ASKED, sourceHint)
@@ -227,7 +227,7 @@ class LinkInterceptorActivity : AppCompatActivity() {
             store.setLinkAction(sourcePackage, persistAction)
         }
         store.updateAttemptOutcome(sourcePackage, timestamp, LinkOutcome.DENIED)
-        showBlockedToast(getString(R.string.denied_message))
+        showBlockedToast(url, getString(R.string.denied_message))
     }
 
     private fun forwardToPackage(uri: Uri, targetPackage: String): Boolean {
@@ -243,8 +243,14 @@ class LinkInterceptorActivity : AppCompatActivity() {
         }
     }
 
-    private fun showBlockedToast(reason: String) {
-        Toast.makeText(this, reason, Toast.LENGTH_SHORT).show()
+    private fun showBlockedToast(url: String, reason: String) {
+        val trimmed = url.trim()
+        val displayUrl = if (trimmed.length > MAX_TOAST_URL_CHARS) {
+            trimmed.take(MAX_TOAST_URL_CHARS).trimEnd() + "…"
+        } else {
+            trimmed
+        }
+        Toast.makeText(this, getString(R.string.blocked_toast, reason, displayUrl), Toast.LENGTH_SHORT).show()
         finish()
     }
 
@@ -449,5 +455,6 @@ class LinkInterceptorActivity : AppCompatActivity() {
         private const val MAX_REGEX_PATTERNS = 20
         private val PACKAGE_REGEX = Regex("^[a-zA-Z0-9_.]+$")
         private const val MAX_HINT_LENGTH = 200
+        private const val MAX_TOAST_URL_CHARS = 80
     }
 }
