@@ -19,7 +19,9 @@
     <string name="attempts">Attempts</string>
     <string name="attempts_count">Attempts: %1$d</string>
     <string name="unknown_app">Unknown app</string>
+    <string name="unknown_app_no_referrer">Unknown app (no referrer)</string>
     <string name="pick_browser">Pick a browser</string>
+    <string name="no_external_browser">No external browser found.</string>
     <string name="clear_redirect">Clear redirect</string>
     <string name="filter_apps">Filter apps</string>
     <string name="sort_attempts">Sort: Attempts</string>

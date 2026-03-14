@@ -459,6 +459,7 @@ class MainActivity : AppCompatActivity() {
             addCategory(Intent.CATEGORY_DEFAULT)
         }
         val resolved = packageManager.queryIntentActivities(intent, 0)
+            .filter { it.activityInfo.packageName != packageName }
         return resolved.sortedBy { it.loadLabel(packageManager).toString().lowercase() }
     }
 
@@ -476,6 +477,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun resolveAppLabel(packageName: String): String {
+        if (packageName == UNKNOWN_PACKAGE) {
+            return getString(R.string.unknown_app_no_referrer)
+        }
         return try {
             val info = packageManager.getApplicationInfo(packageName, 0)
             packageManager.getApplicationLabel(info).toString()
@@ -497,6 +501,7 @@ class MainActivity : AppCompatActivity() {
         private const val MAX_REGEX_LENGTH = 200
         private const val MAX_REGEX_PATTERNS = 20
         private const val MANUAL_ENTRY = "__manual_entry__"
+        private const val UNKNOWN_PACKAGE = "unknown"
         private val PACKAGE_REGEX = Regex("^[a-zA-Z0-9_.]+$")
         private const val MAX_HISTORY_URL_CHARS = 80
     }

@@ -19,7 +19,7 @@ A lightweight Android browser that can intercept links from other apps, track at
 - Reset attempt counts per app or for all apps.
 
 ## How It Works
-- `LinkInterceptorActivity` receives browser intents and attributes the source app via the referrer when available.
+- `LinkInterceptorActivity` receives browser intents and attributes the source app via the referrer when available (with best-effort parsing when only a referrer string is provided).
 - Attempts and per-app link history are stored in `SharedPreferences` as JSON.
 - Policies determine whether to allow, ask, deny, redirect, or open inside the built-in WebView.
 - Global redirect applies when a per-app redirect is not set.
@@ -45,13 +45,14 @@ A lightweight Android browser that can intercept links from other apps, track at
 11. Use `Copy policies` to put the JSON on the clipboard.
 
 ## Notes
-- Source app attribution depends on the referrer being provided by the caller.
+- Source app attribution depends on the caller providing referrer data; when it's missing, the app is shown as unknown.
 - Link history is capped at 200 entries per app to keep storage bounded.
 - Package visibility restrictions are handled via `<queries>` in the manifest.
 - Minimum SDK is set to 19 for broad compatibility.
 - Import merge behavior: attempt counts are added together, and imported action/redirect/allowlist settings override existing ones for that app. Imported link history is appended and capped.
 - Regex allowlist safety limits: max 20 regex patterns per app, max 200 characters per regex.
 - The allowlist editor validates `re:` patterns and will refuse invalid or too-long regex entries.
+- The external browser chooser filters out Block Store Links itself; if no other browsers are installed, it falls back to the built-in WebView.
 
 ## Project Structure
 - `app/src/main/java/com/duda/blockstorelinks/LinkInterceptorActivity.kt`

@@ -4,3 +4,4 @@
 - Added allowlist support for per-link redirects via `pattern => package`.
 - Export/import now includes global redirect and link history alongside policies.
 - Improved browser pickers and fallback referrer handling.
+- External browser picker now filters out this app and falls back to the built-in WebView when needed.

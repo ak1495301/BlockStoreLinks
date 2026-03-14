@@ -107,6 +107,9 @@ class AppPolicyAdapter(
             }
 
         private fun resolveAppLabel(packageName: String): String {
+            if (packageName == UNKNOWN_PACKAGE) {
+                return context.getString(R.string.unknown_app_no_referrer)
+            }
             return try {
                 val info = context.packageManager.getApplicationInfo(packageName, 0)
                 context.packageManager.getApplicationLabel(info).toString()
@@ -131,5 +134,9 @@ class AppPolicyAdapter(
         override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
             return oldItems[oldItemPosition] == newItems[newItemPosition]
         }
+    }
+
+    companion object {
+        private const val UNKNOWN_PACKAGE = "unknown"
     }
 }

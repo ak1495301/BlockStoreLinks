@@ -26,7 +26,7 @@ class LinkInterceptorActivity : AppCompatActivity() {
             return
         }
 
-        val sourcePackage = resolveSourcePackage(intent) ?: "unknown"
+        val sourcePackage = resolveSourcePackage(intent) ?: UNKNOWN_PACKAGE
         val policy = store.getPolicy(sourcePackage)
         val allowlist = policy?.allowlistPatterns ?: emptyList()
         val allowlistMatch = if (allowlist.isNotEmpty()) {
@@ -231,16 +231,16 @@ class LinkInterceptorActivity : AppCompatActivity() {
 
     private fun resolveSourcePackage(intent: Intent): String? {
         val activityReferrer = referrer
-        if (activityReferrer != null && activityReferrer.scheme == "android-app") {
-            return activityReferrer.host
+        if (activityReferrer != null) {
+            extractPackageFromReferrer(activityReferrer)?.let { return it }
         }
         val referrer = getParcelableUri(intent, Intent.EXTRA_REFERRER)
-        if (referrer != null && referrer.scheme == "android-app") {
-            return referrer.host
+        if (referrer != null) {
+            extractPackageFromReferrer(referrer)?.let { return it }
         }
         val referrerName = intent.getStringExtra(EXTRA_REFERRER_NAME)
-        if (referrerName != null && referrerName.startsWith("android-app://")) {
-            return Uri.parse(referrerName).host
+        if (!referrerName.isNullOrBlank()) {
+            extractPackageFromReferrerName(referrerName)?.let { return it }
         }
         val packageName = intent.`package`
         if (!packageName.isNullOrBlank()) {
@@ -250,6 +250,9 @@ class LinkInterceptorActivity : AppCompatActivity() {
     }
 
     private fun resolveAppLabel(packageName: String): String {
+        if (packageName == UNKNOWN_PACKAGE) {
+            return getString(R.string.unknown_app_no_referrer)
+        }
         return try {
             val info = packageManager.getApplicationInfo(packageName, 0)
             packageManager.getApplicationLabel(info).toString()
@@ -265,6 +268,25 @@ class LinkInterceptorActivity : AppCompatActivity() {
             @Suppress("DEPRECATION")
             intent.getParcelableExtra(key)
         }
+    }
+
+    private fun extractPackageFromReferrer(referrer: Uri): String? {
+        return when (referrer.scheme) {
+            "android-app" -> referrer.host
+            "package" -> referrer.schemeSpecificPart?.takeIf { it.matches(PACKAGE_REGEX) }
+            else -> extractPackageFromReferrerName(referrer.toString())
+        }
+    }
+
+    private fun extractPackageFromReferrerName(referrerName: String): String? {
+        val trimmed = referrerName.trim()
+        if (trimmed.startsWith("android-app://")) {
+            return Uri.parse(trimmed).host
+        }
+        if (trimmed.startsWith("package:")) {
+            return trimmed.removePrefix("package:").takeIf { it.matches(PACKAGE_REGEX) }
+        }
+        return trimmed.takeIf { it.matches(PACKAGE_REGEX) }
     }
 
     private fun findAllowlistMatch(url: String, allowlist: List<String>): AllowlistMatch? {
@@ -307,10 +329,12 @@ class LinkInterceptorActivity : AppCompatActivity() {
     private data class AllowlistMatch(val redirectPackage: String?)
 
     companion object {
+        private const val UNKNOWN_PACKAGE = "unknown"
         private const val EXTRA_REFERRER_NAME = "android.intent.extra.REFERRER_NAME"
         private const val REGEX_PREFIX = "re:"
         private const val REDIRECT_DELIMITER = "=>"
         private const val MAX_REGEX_LENGTH = 200
         private const val MAX_REGEX_PATTERNS = 20
+        private val PACKAGE_REGEX = Regex("^[a-zA-Z0-9_.]+$")
     }
 }
