@@ -5,5 +5,5 @@
 - Export/import now includes global redirect and link history alongside policies.
 - Improved browser pickers and fallback referrer handling.
 - External browser picker now filters out this app and falls back to the built-in WebView when needed.
-- Added source hints for unknown callers in link history.
+- Added source hints in link history (action/categories/referrer extras).
 - Added manual label overrides for app entries.

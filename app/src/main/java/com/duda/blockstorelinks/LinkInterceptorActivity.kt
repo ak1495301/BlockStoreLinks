@@ -27,7 +27,7 @@ class LinkInterceptorActivity : AppCompatActivity() {
         }
 
         val sourcePackage = resolveSourcePackage(intent) ?: UNKNOWN_PACKAGE
-        val sourceHint = if (sourcePackage == UNKNOWN_PACKAGE) buildSourceHint(intent) else null
+        val sourceHint = buildSourceHint(intent)
         val policy = store.getPolicy(sourcePackage)
         val allowlist = policy?.allowlistPatterns ?: emptyList()
         val allowlistMatch = if (allowlist.isNotEmpty()) {
@@ -306,6 +306,19 @@ class LinkInterceptorActivity : AppCompatActivity() {
 
     private fun buildSourceHint(intent: Intent): String? {
         val parts = mutableListOf<String>()
+        val action = intent.action
+        if (!action.isNullOrBlank()) {
+            parts.add("action=$action")
+        }
+        val categories = intent.categories?.sorted()?.joinToString(",")
+        if (!categories.isNullOrBlank()) {
+            parts.add("categories=$categories")
+        }
+        val data = intent.data
+        if (data != null) {
+            data.scheme?.let { parts.add("data_scheme=$it") }
+            data.host?.let { parts.add("data_host=$it") }
+        }
         val activityReferrer = referrer
         if (activityReferrer != null) {
             parts.add("referrer=$activityReferrer")
