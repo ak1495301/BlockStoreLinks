@@ -1,4 +1,4 @@
-package com.duda.blockstorelinks
+package fuck.blockstorelinks.droidvendorssuck
 
 enum class LinkAction {
     ALLOW,

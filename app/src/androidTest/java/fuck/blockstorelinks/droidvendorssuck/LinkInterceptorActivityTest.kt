@@ -1,4 +1,4 @@
-package com.duda.blockstorelinks
+package fuck.blockstorelinks.droidvendorssuck
 
 import android.app.Activity
 import android.app.Instrumentation

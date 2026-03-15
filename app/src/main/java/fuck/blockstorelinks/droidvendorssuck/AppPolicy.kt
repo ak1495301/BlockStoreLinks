@@ -1,4 +1,4 @@
-package com.duda.blockstorelinks
+package fuck.blockstorelinks.droidvendorssuck
 
 data class AppPolicy(
     val packageName: String,

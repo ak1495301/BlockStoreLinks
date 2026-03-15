@@ -1,4 +1,4 @@
-package com.duda.blockstorelinks
+package fuck.blockstorelinks.droidvendorssuck
 
 import android.annotation.SuppressLint
 import android.os.Bundle

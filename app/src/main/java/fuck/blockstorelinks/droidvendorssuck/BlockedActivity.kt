@@ -1,4 +1,4 @@
-package com.duda.blockstorelinks
+package fuck.blockstorelinks.droidvendorssuck
 
 import android.content.ActivityNotFoundException
 import android.content.ComponentName

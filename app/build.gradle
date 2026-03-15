@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.duda.blockstorelinks"
+    namespace = "fuck.blockstorelinks.droidvendorssuck"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.duda.blockstorelinks"
+        applicationId = "fuck.blockstorelinks.droidvendorssuck"
         minSdk = 23
         targetSdk = 36
         versionCode = 1
